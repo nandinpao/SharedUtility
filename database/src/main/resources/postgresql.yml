@@ -24,7 +24,8 @@ pg:
     idle-timeout: 30000
     pool-name: PgClusterPool
 
-  mapper:
+  mybatis:
+    mapper-locations: classpath:/mappers/**/*.xml
+    type-aliases-package: com.example.pgstarter.entity
     base-packages:
-      - com.example.pgstarter.mapper
-      - com.other.mapper
+      - com.agitg.pgstarter.mapper

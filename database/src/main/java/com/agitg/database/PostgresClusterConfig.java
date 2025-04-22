@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.sql.DataSource;
 
@@ -11,14 +12,17 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.agitg.database.bean.DataSourceProp;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @ConfigurationProperties(prefix = "pg")
 @Data
+@Slf4j
 public class PostgresClusterConfig {
 
     private List<DataSourceProp> write;
@@ -26,17 +30,13 @@ public class PostgresClusterConfig {
     private String driverClassName;
     private Map<String, String> hikari;
 
-    @Data
-    public static class DataSourceProp {
-        private String name;
-        private String url;
-        private String username;
-        private String password;
-    }
-
     @Bean
     public DataSource routingDataSource() {
-        
+
+        if ((Objects.isNull(write) || write.isEmpty()) && (Objects.isNull(read) || read.isEmpty())) {
+            return null;
+        }
+
         Map<Object, Object> targets = new HashMap<>();
 
         List<Object> writeKeys = new ArrayList<>();
@@ -61,7 +61,9 @@ public class PostgresClusterConfig {
     }
 
     private DataSource create(DataSourceProp prop) {
+
         HikariConfig config = new HikariConfig();
+
         config.setJdbcUrl(prop.getUrl());
         config.setUsername(prop.getUsername());
         config.setPassword(prop.getPassword());
@@ -70,7 +72,7 @@ public class PostgresClusterConfig {
         config.setMaximumPoolSize(Integer.parseInt(hikari.get("maximum-pool-size")));
         config.setIdleTimeout(Long.parseLong(hikari.get("idle-timeout")));
         config.setPoolName(hikari.get("pool-name") + "-" + prop.getName());
+
         return new HikariDataSource(config);
     }
 }
-

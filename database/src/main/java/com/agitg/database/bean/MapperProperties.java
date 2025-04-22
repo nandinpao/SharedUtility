@@ -1,4 +1,4 @@
-package com.agitg.database;
+package com.agitg.database.bean;
 
 import java.util.List;
 
