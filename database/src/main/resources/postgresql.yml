@@ -1,0 +1,30 @@
+pg:
+  write:
+    - name: master1
+      url: jdbc:postgresql://master1.db:5432/app
+      username: writer
+      password: secret
+    - name: master2
+      url: jdbc:postgresql://master2.db:5432/app
+      username: writer
+      password: secret
+  read:
+    - name: slave1
+      url: jdbc:postgresql://slave1.db:5432/app
+      username: reader
+      password: secret
+    - name: slave2
+      url: jdbc:postgresql://slave2.db:5432/app
+      username: reader
+      password: secret
+  driver-class-name: org.postgresql.Driver
+  hikari:
+    minimum-idle: 5
+    maximum-pool-size: 20
+    idle-timeout: 30000
+    pool-name: PgClusterPool
+
+  mapper:
+    base-packages:
+      - com.example.pgstarter.mapper
+      - com.other.mapper
