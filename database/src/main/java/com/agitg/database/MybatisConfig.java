@@ -1,4 +1,4 @@
-package com.agitg.database.bean;
+package com.agitg.database;
 
 import javax.sql.DataSource;
 
@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.StringUtils;
+
+import com.agitg.database.bean.MybatisProperties;
 
 @Configuration
 public class MybatisConfig {
