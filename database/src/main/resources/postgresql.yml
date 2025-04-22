@@ -4,25 +4,48 @@ pg:
       url: jdbc:postgresql://master1.db:5432/app
       username: writer
       password: secret
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 5
+        idle-timeout: 30000
+        max-lifetime: 1800000
+        connection-timeout: 60000
+        pool-name: Master1Pool
     - name: master2
       url: jdbc:postgresql://master2.db:5432/app
       username: writer
       password: secret
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 5
+        idle-timeout: 30000
+        max-lifetime: 1800000
+        connection-timeout: 60000
+        pool-name: Master2Pool
   read:
     - name: slave1
       url: jdbc:postgresql://slave1.db:5432/app
       username: reader
       password: secret
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 5
+        idle-timeout: 30000
+        max-lifetime: 1800000
+        connection-timeout: 60000
+        pool-name: Slave1Pool
     - name: slave2
       url: jdbc:postgresql://slave2.db:5432/app
       username: reader
       password: secret
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 5
+        idle-timeout: 30000
+        max-lifetime: 1800000
+        connection-timeout: 60000
+        pool-name: Slave2Pool
   driver-class-name: org.postgresql.Driver
-  hikari:
-    minimum-idle: 5
-    maximum-pool-size: 20
-    idle-timeout: 30000
-    pool-name: PgClusterPool
 
   mybatis:
     mapper-locations: classpath:/mappers/**/*.xml

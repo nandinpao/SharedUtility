@@ -28,7 +28,6 @@ public class PostgresClusterConfig {
     private List<DataSourceProp> write;
     private List<DataSourceProp> read;
     private String driverClassName;
-    private Map<String, String> hikari;
 
     @Bean
     public DataSource routingDataSource() {
@@ -63,15 +62,19 @@ public class PostgresClusterConfig {
     private DataSource create(DataSourceProp prop) {
 
         HikariConfig config = new HikariConfig();
-
         config.setJdbcUrl(prop.getUrl());
         config.setUsername(prop.getUsername());
         config.setPassword(prop.getPassword());
         config.setDriverClassName(driverClassName);
-        config.setMinimumIdle(Integer.parseInt(hikari.get("minimum-idle")));
-        config.setMaximumPoolSize(Integer.parseInt(hikari.get("maximum-pool-size")));
-        config.setIdleTimeout(Long.parseLong(hikari.get("idle-timeout")));
-        config.setPoolName(hikari.get("pool-name") + "-" + prop.getName());
+
+        if (prop.getHikari() != null) {
+            config.setMinimumIdle(prop.getHikari().getMinimumIdle());
+            config.setMaximumPoolSize(prop.getHikari().getMaximumPoolSize());
+            config.setIdleTimeout(prop.getHikari().getIdleTimeout());
+            config.setConnectionTimeout(prop.getHikari().getConnectionTimeout());
+            config.setMaxLifetime(prop.getHikari().getMaxLifetime());
+            config.setPoolName(prop.getHikari().getPoolName());
+        }
 
         return new HikariDataSource(config);
     }
