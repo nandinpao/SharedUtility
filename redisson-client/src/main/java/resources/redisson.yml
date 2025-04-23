@@ -1,0 +1,30 @@
+redis:
+  database: 0
+  password:
+  timeout: 30000
+  mode: cluster
+  pool:
+    maxIdle: 16
+    minIdle: 8
+    maxActive: 8
+    maxWait: 3000
+    connTimeout: 3000
+    soTimeout: 3000
+    size: 10
+  single:
+    address: 127.0.0.1:7001
+  cluster:
+    scanInterval: 1000
+    nodes:
+      - 127.0.0.1:7001
+      - 127.0.0.1:7002
+      - 127.0.0.1:7003
+      - 127.0.0.1:7004
+      - 127.0.0.1:7005
+      - 127.0.0.1:7006
+    readMode: SLAVE
+    retryAttempts: 3
+    failedAttempts: 3
+    slaveConnection-pool-size: 64
+    masterConnection-pool-size: 64
+    retryInterval: 1500
