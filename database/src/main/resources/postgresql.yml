@@ -4,6 +4,7 @@ pg:
       url: jdbc:postgresql://master1.db:5432/app
       username: writer
       password: secret
+      isDefault: true
       hikari:
         minimum-idle: 3
         maximum-pool-size: 5

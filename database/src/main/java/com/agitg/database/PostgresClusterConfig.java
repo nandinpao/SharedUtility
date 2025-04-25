@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.sql.DataSource;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 
 import com.agitg.database.bean.DataSourceProp;
@@ -21,41 +22,50 @@ import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @ConfigurationProperties(prefix = "pg")
+@Conditional(PgRoutingCondition.class)
 @Data
 @Slf4j
 public class PostgresClusterConfig {
 
+    private DataSourceProp defaultSource;
     private List<DataSourceProp> write;
     private List<DataSourceProp> read;
     private String driverClassName;
 
     @Bean
+    // @ConditionalOnExpression("${pg.write[0].url:#{null}} != null or ${pg.read[0].url:#{null}} != null")
     public DataSource routingDataSource() {
 
-        if ((Objects.isNull(write) || write.isEmpty()) && (Objects.isNull(read) || read.isEmpty())) {
-            return null;
+        if ((write == null || write.isEmpty()) && (read == null || read.isEmpty())) {
+            throw new IllegalStateException("No pg.master or pg.read configuration found.");
         }
 
         Map<Object, Object> targets = new HashMap<>();
-
         List<Object> writeKeys = new ArrayList<>();
+        List<Object> readKeys = new ArrayList<>();
+
         for (var w : write) {
             DataSource ds = create(w);
             targets.put(w.getName(), ds);
             writeKeys.add(w.getName());
         }
-
-        List<Object> readKeys = new ArrayList<>();
         for (var r : read) {
             DataSource ds = create(r);
             targets.put(r.getName(), ds);
             readKeys.add(r.getName());
         }
 
-        var routing = new RoutingDataSource(writeKeys, readKeys);
-        routing.setTargetDataSources(targets);
-        routing.setDefaultTargetDataSource(targets.get(write.get(0).getName()));
+        String defaultKey = write.stream().filter(DataSourceProp::getIsDefault).map(DataSourceProp::getName).findFirst()
+                .orElseGet(() -> read.stream().filter(DataSourceProp::getIsDefault).map(DataSourceProp::getName)
+                        .findFirst().orElse(null));
 
+        if (defaultKey == null) {
+            throw new IllegalStateException("No default DataSource specified (missing isDefault=true).");
+        }
+
+        var routing = new RoutingDataSource(writeKeys, readKeys, defaultKey);
+        routing.setTargetDataSources(targets);
+        routing.setDefaultTargetDataSource(targets.get(defaultKey));
         return routing;
     }
 
