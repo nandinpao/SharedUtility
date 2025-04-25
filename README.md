@@ -238,7 +238,7 @@ spring:
 ### Autowire the `RedissonAccess` Bean
 
 ```java
-import com.example.redisson.RedissonAccess;
+import com.agitg.redisson.config.RedissonAccess;
 import org.springframework.stereotype.Service;
 
 @Service

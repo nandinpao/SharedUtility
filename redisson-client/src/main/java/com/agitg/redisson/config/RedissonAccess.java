@@ -19,6 +19,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.MessageListener;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class RedissonAccess {
 
     private final RedissonClient redissonClient;
-    private final ObjectMapper MAPPER;
+    private final ObjectMapper objectMapper;
 
     // === Bucket ===
 
@@ -72,7 +73,7 @@ public class RedissonAccess {
 
     public <K, V> V getFromMap(String mapName, K key, Class<V> valueType) {
         Object raw = redissonClient.getMap(mapName).get(key);
-        return MAPPER.convertValue(raw, valueType);
+        return objectMapper.convertValue(raw, valueType);
     }
 
     public <K> void removeFromMap(String map, K key) {
@@ -82,8 +83,8 @@ public class RedissonAccess {
     public <K, V> Map<K, V> getAllFromMap(String mapName, Class<K> keyClass, Class<V> valueClass) {
         Map<Object, Object> raw = redissonClient.getMap(mapName).readAllMap();
         return raw.entrySet().stream().collect(Collectors.toMap(
-                e -> MAPPER.convertValue(e.getKey(), keyClass),
-                e -> MAPPER.convertValue(e.getValue(), valueClass)));
+                e -> objectMapper.convertValue(e.getKey(), keyClass),
+                e -> objectMapper.convertValue(e.getValue(), valueClass)));
     }
 
     // === Set ===
@@ -102,7 +103,7 @@ public class RedissonAccess {
 
     public <T> Set<T> getAllFromSet(String name, Class<T> clazz) {
         Set<Object> raw = redissonClient.getSet(name).readAll();
-        return raw.stream().map(obj -> MAPPER.convertValue(obj, clazz)).collect(Collectors.toSet());
+        return raw.stream().map(obj -> objectMapper.convertValue(obj, clazz)).collect(Collectors.toSet());
     }
 
     // === List ===
@@ -117,12 +118,12 @@ public class RedissonAccess {
 
     public <T> T popFromList(String name, Class<T> clazz) {
         Object raw = redissonClient.getList(name).remove(0);
-        return MAPPER.convertValue(raw, clazz);
+        return objectMapper.convertValue(raw, clazz);
     }
 
     public <T> List<T> getAllFromList(String name, Class<T> clazz) {
         List<Object> raw = redissonClient.getList(name).readAll();
-        return raw.stream().map(obj -> MAPPER.convertValue(obj, clazz)).toList();
+        return raw.stream().map(obj -> objectMapper.convertValue(obj, clazz)).toList();
     }
 
     // === Queue ===
@@ -137,12 +138,12 @@ public class RedissonAccess {
 
     public <T> T dequeue(String name, Class<T> clazz) {
         Object raw = redissonClient.getQueue(name).poll();
-        return MAPPER.convertValue(raw, clazz);
+        return objectMapper.convertValue(raw, clazz);
     }
 
     public <T> List<T> dequeueAll(String name, Class<T> clazz) {
         List<Object> raw = redissonClient.getQueue(name).readAll();
-        return raw.stream().map(obj -> MAPPER.convertValue(obj, clazz)).toList();
+        return raw.stream().map(obj -> objectMapper.convertValue(obj, clazz)).toList();
     }
 
     // === AtomicLong ===
@@ -215,4 +216,64 @@ public class RedissonAccess {
         return getTopic(topic).addListener(Object.class, listener);
     }
 
+    public <T> void setListWithTTL(String key, List<T> list, long ttlSeconds) {
+        redissonClient.getBucket(key).set(list, ttlSeconds, TimeUnit.SECONDS);
+    }
+
+    public <K, V> void setMapWithTTL(String key, Map<K, V> map, long ttlSeconds) {
+        redissonClient.getBucket(key).set(map, ttlSeconds, TimeUnit.SECONDS);
+    }
+
+    public <T> void setSetWithTTL(String key, Set<T> set, long ttlSeconds) {
+        redissonClient.getBucket(key).set(set, ttlSeconds, TimeUnit.SECONDS);
+    }
+
+    // ========================= TTL GET =========================
+
+    public <T> List<T> getListFromBucket(String key, Class<T> itemClass) {
+        Object raw = redissonClient.getBucket(key).get();
+        return objectMapper.convertValue(raw, new TypeReference<>() {
+        });
+    }
+
+    public <T> List<T> getListFromBucket(String key, TypeReference<List<T>> typeRef) {
+        Object raw = redissonClient.getBucket(key).get();
+        return objectMapper.convertValue(raw, typeRef);
+    }
+
+    public <K, V> Map<K, V> getMapFromBucket(String key, Class<K> keyClass, Class<V> valueClass) {
+        Object raw = redissonClient.getBucket(key).get();
+        return objectMapper.convertValue(raw, new TypeReference<>() {
+        });
+    }
+
+    public <K, V> Map<K, V> getMapFromBucket(String key, TypeReference<Map<K, V>> typeRef) {
+        Object raw = redissonClient.getBucket(key).get();
+        return objectMapper.convertValue(raw, typeRef);
+    }
+
+    public <T> Set<T> getSetFromBucket(String key, Class<T> itemClass) {
+        Object raw = redissonClient.getBucket(key).get();
+        return objectMapper.convertValue(raw, new TypeReference<>() {
+        });
+    }
+
+    public <T> Set<T> getSetFromBucket(String key, TypeReference<Set<T>> typeRef) {
+        Object raw = redissonClient.getBucket(key).get();
+        return objectMapper.convertValue(raw, typeRef);
+    }
+
+    // ========================= TTL UTILITY =========================
+
+    public boolean keyExists(String key) {
+        return redissonClient.getBucket(key).isExists();
+    }
+
+    public boolean deleteKey(String key) {
+        return redissonClient.getBucket(key).delete();
+    }
+
+    public boolean expireKey(String key, long seconds) {
+        return redissonClient.getBucket(key).expire(seconds, TimeUnit.SECONDS);
+    }
 }
