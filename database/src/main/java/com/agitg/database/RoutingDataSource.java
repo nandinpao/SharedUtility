@@ -53,23 +53,6 @@ public class RoutingDataSource extends AbstractRoutingDataSource {
 
     @Override
     protected Object determineCurrentLookupKey() {
-        // if (Boolean.TRUE.equals(isRead.get())) {
-        //     if (preferredRead.get() != null) {
-        //         return preferredRead.get();
-        //     }
-        //     int index = (readCounter++) % readDataSources.size();
-        //     return readDataSources.get(index);
-        // } else {
-        //     if (Boolean.TRUE.equals(forceWritePool.get())) {
-        //         int index = (writeCounter++) % writeDataSources.size();
-        //         return writeDataSources.get(index);
-        //     }
-        //     if (preferredWrite.get() != null) {
-        //         return preferredWrite.get();
-        //     }
-        //     int index = (writeCounter++) % writeDataSources.size();
-        //     return writeDataSources.get(index);
-        // }
 
         if (Boolean.TRUE.equals(isRead.get())) {
             if (preferredRead.get() != null)

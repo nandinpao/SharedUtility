@@ -72,7 +72,12 @@ pg:
         pool-name: Master1Pool
   driver-class-name: org.postgresql.Driver
   mapper:
-    base-packages: com.example.pgstarter.mapper,com.other.mapper
+    mapper-locations: 
+      - classpath:/mappers/**/*.xml
+    type-aliases-package: 
+      - com.example.pgstarter.entity
+    base-packages:
+      - com.example.pgstarter.mapper
 ```
 
 ### 3. **Enable Mapper Scanning**

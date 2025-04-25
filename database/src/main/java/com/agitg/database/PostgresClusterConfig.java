@@ -7,7 +7,6 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -30,7 +29,7 @@ public class PostgresClusterConfig {
     private DataSourceProp defaultSource;
     private List<DataSourceProp> write;
     private List<DataSourceProp> read;
-    private String driverClassName;
+    private String driverClassName; 
 
     @Bean
     // @ConditionalOnExpression("${pg.write[0].url:#{null}} != null or ${pg.read[0].url:#{null}} != null")

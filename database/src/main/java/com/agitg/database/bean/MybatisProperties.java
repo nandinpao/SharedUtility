@@ -1,13 +1,15 @@
 package com.agitg.database.bean;
 
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Data;
 
 @Data
-@ConfigurationProperties(prefix = "pg.mybatis")
+@ConfigurationProperties(prefix = "pg.mapper")
 public class MybatisProperties {
-    private String mapperLocations;
-    private String typeAliasesPackage;
-    private String basePackages; // 支援 base-packages 掃描 mapper
+    private List<String> mapperLocations;
+    private List<String> typeAliasesPackage;
+    private List<String> basePackages; // 支援 base-packages 掃描 mapper
 }
