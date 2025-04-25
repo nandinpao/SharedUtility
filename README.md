@@ -36,6 +36,7 @@ pg:
       url: jdbc:postgresql://master1.db:5432/app
       username: writer
       password: secret
+      isDefault: true
       hikari:
         minimum-idle: 3
         maximum-pool-size: 10
@@ -322,15 +323,3 @@ This starter is ready for extensions like:
 
 ---
 ```
-
----
-
-## ✅ 補充建議
-
-你可以：
-- 放上 GitHub 頁面、打包發佈至內部 Nexus/Maven Repo
-- 製作 Gradle 版本 starter（可支援 multi-module build）
-
-是否需要我幫你打包這套 Starter 專案為 GitHub Template 並產出 `pom.xml + README + License` 一併整合？
-
-[Click here to try our newest GPT!](https://chatgpt.com/g/g-odWlfAKWM-lega)
