@@ -22,9 +22,9 @@ Make sure to publish this module to your internal Maven repository, then include
 
 ```xml
 <dependency>
-  <groupId>com.example</groupId>
-  <artifactId>pg-spring-boot-starter</artifactId>
-  <version>1.0.0</version>
+  <groupId>com.agitg</groupId>
+	<artifactId>database</artifactId>
+	<version>1.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -176,9 +176,9 @@ A plug-and-play Spring Boot starter for Redisson – supporting YAML-based confi
 ### Maven
 ```xml
 <dependency>
-  <groupId>com.example</groupId>
-  <artifactId>redisson-spring-boot-starter</artifactId>
-  <version>1.0.0</version>
+  <groupId>com.agitg</groupId>
+  <artifactId>redisson-client</artifactId>
+  <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -190,20 +190,34 @@ A plug-and-play Spring Boot starter for Redisson – supporting YAML-based confi
 
 ```yaml
 redis:
-  mode: cluster
   database: 0
   password:
   timeout: 30000
+  mode: cluster
+  pool:
+    maxIdle: 16
+    minIdle: 8
+    maxActive: 8
+    maxWait: 3000
+    connTimeout: 3000
+    soTimeout: 3000
+    size: 10
+  single:
+    address: 127.0.0.1:7001
   cluster:
     scanInterval: 1000
     nodes:
       - 127.0.0.1:7001
       - 127.0.0.1:7002
+      - 127.0.0.1:7003
+      - 127.0.0.1:7004
+      - 127.0.0.1:7005
+      - 127.0.0.1:7006
     readMode: SLAVE
     retryAttempts: 3
     failedAttempts: 3
-    slaveConnectionPoolSize: 64
-    masterConnectionPoolSize: 64
+    slaveConnection-pool-size: 64
+    masterConnection-pool-size: 64
     retryInterval: 1500
 ```
 
