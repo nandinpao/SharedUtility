@@ -4,9 +4,14 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.redisson.config.ReadMode;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.agitg.redisson.bean.RedissonProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.agitg.redisson.bean.RedissonProperties;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,9 +23,11 @@ public class RedissonAutoConfig {
     private final RedissonProperties props;
 
     @Bean(destroyMethod = "shutdown")
+    @ConditionalOnMissingBean
     public RedissonClient redissonClient() {
+
         Config config = new Config();
-        String redisPrefix = "redis://";
+        final String redisPrefix = "redis://";
 
         switch (props.getMode()) {
             case "single" -> {
@@ -51,5 +58,11 @@ public class RedissonAutoConfig {
         }
 
         return Redisson.create(config);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RedissonAccess redissonAccess(RedissonClient client, ObjectMapper objectMapper) {
+        return new RedissonAccess(client, objectMapper);
     }
 }
