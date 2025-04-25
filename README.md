@@ -143,3 +143,194 @@ public class UserService {
 - ✅ MyBatis + HikariCP integration
 - ✅ Fully YAML configurable
 - ✅ Modular and testable architecture
+
+
+
+📘 **README.md 構建中...**  
+目標：提供一份給軟體工程師使用的 `RedissonAccess Spring Boot Starter` 說明與使用指南  
+內容涵蓋：模組說明、安裝方式、設定方式、使用範例、自動註冊條件、常見錯誤與排查。
+
+---
+
+### ✅ `README.md` (for `redisson-spring-boot-starter`)
+
+```markdown
+# Redisson Spring Boot Starter
+
+A plug-and-play Spring Boot starter for Redisson – supporting YAML-based configuration, auto-reloading, and type-safe Redis access through `RedissonAccess`.
+
+## 💡 Features
+
+- ✅ Supports both **Single** and **Cluster** Redis modes
+- ✅ YAML-based configuration (`redisson.yaml`)
+- ✅ Auto-registers `RedissonClient` and `RedissonAccess` beans
+- ✅ Type-safe access wrappers for `List`, `Set`, `Map`, `Queue`, `Bucket`, etc.
+- ✅ Works in **Spring Boot** or **Pure Java** environments
+- ✅ Conditional auto-configuration only if `redis.mode` is provided
+
+---
+
+## 📦 Installation
+
+### Maven
+```xml
+<dependency>
+  <groupId>com.example</groupId>
+  <artifactId>redisson-spring-boot-starter</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+---
+
+## ⚙️ Configuration
+
+### Step 1. Add `redisson.yaml` to your classpath:
+
+```yaml
+redis:
+  mode: cluster
+  database: 0
+  password:
+  timeout: 30000
+  cluster:
+    scanInterval: 1000
+    nodes:
+      - 127.0.0.1:7001
+      - 127.0.0.1:7002
+    readMode: SLAVE
+    retryAttempts: 3
+    failedAttempts: 3
+    slaveConnectionPoolSize: 64
+    masterConnectionPoolSize: 64
+    retryInterval: 1500
+```
+
+### Step 2. Import it via `application.yml`
+
+```yaml
+spring:
+  config:
+    import: classpath:redisson.yaml
+```
+
+> 💡 If `redis.mode` is missing, the auto-configuration will be skipped.
+
+---
+
+## ✨ Usage
+
+### Autowire the `RedissonAccess` Bean
+
+```java
+import com.example.redisson.RedissonAccess;
+import org.springframework.stereotype.Service;
+
+@Service
+public class RedisService {
+
+    private final RedissonAccess redis;
+
+    public RedisService(RedissonAccess redis) {
+        this.redis = redis;
+    }
+
+    public void storeUser(User user) {
+        redis.setBucketValue("user:" + user.getId(), user);
+    }
+
+    public User getUser(String userId) {
+        return redis.getBucketValue("user:" + userId, User.class);
+    }
+
+    public List<User> getUsers() {
+        return redis.getAllFromList("user-list", User.class);
+    }
+}
+```
+
+---
+
+## 🧪 Type-safe Access Examples
+
+### List
+```java
+List<User> users = redis.getAllFromList("user-list", User.class);
+redis.pushToList("user-list", new User(...));
+```
+
+### Map
+```java
+Map<String, User> map = redis.getAllFromMap("user-map", String.class, User.class);
+User u = redis.getFromMap("user-map", "uid123", User.class);
+```
+
+### Queue
+```java
+redis.enqueue("job-queue", new Task(...));
+Task job = redis.dequeue("job-queue", Task.class);
+```
+
+---
+
+## 🛑 Auto-Configuration Conditions
+
+- Requires `redis.mode` to be defined in `redisson.yaml`
+- If missing, `RedissonClient` and `RedissonAccess` will not be registered
+- Works with Spring Boot 2.x and 3.x (supports `spring.factories` and `AutoConfiguration.imports`)
+
+---
+
+## 📁 Directory Structure
+
+```
+redisson-spring-boot-starter/
+├── RedissonAutoConfiguration.java
+├── RedissonAccess.java
+├── RedissonProperties.java
+├── resources/
+│   ├── redisson.yaml              # Imported via application.yml
+│   └── META-INF/
+│       └── spring.factories       # for Spring Boot 2.x
+│       └── spring/.../AutoConfiguration.imports  # for Spring Boot 3.x
+```
+
+---
+
+## 🧠 Notes
+
+- `ObjectMapper` is injected from Spring context (inherits global config)
+- Uses Jackson for JSON serialization when casting generic types
+- Works best with POJOs with public getters/setters and default constructors
+
+---
+
+## 🧑‍💻 For Contributors
+
+Pull requests welcome 🙌  
+This starter is ready for extensions like:
+- Redis Streams
+- Lua scripting
+- Metrics & HealthCheck auto-exposure
+
+---
+
+## 🔗 Related Projects
+
+- [Redisson Official](https://github.com/redisson/redisson)
+- [Spring Boot External Config](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config)
+
+---
+```
+
+---
+
+## ✅ 補充建議
+
+你可以：
+- 放上 GitHub 頁面、打包發佈至內部 Nexus/Maven Repo
+- 製作 Gradle 版本 starter（可支援 multi-module build）
+
+是否需要我幫你打包這套 Starter 專案為 GitHub Template 並產出 `pom.xml + README + License` 一併整合？
+
+[Click here to try our newest GPT!](https://chatgpt.com/g/g-odWlfAKWM-lega)
