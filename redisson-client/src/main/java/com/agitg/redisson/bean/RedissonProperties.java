@@ -1,4 +1,4 @@
-package com.agitg.redisson.config;
+package com.agitg.redisson.bean;
 
 import lombok.Data;
 import java.util.List;
