@@ -115,6 +115,10 @@ public class UserService {
     public void writeToMaster1(User user) {
         userMapper.insert(user);
     }
+
+    public void writeInfo(User user) {  // use a default connection
+        userMapper.insert(user);
+    }
 }
 ```
 
