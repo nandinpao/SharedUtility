@@ -122,6 +122,16 @@ public class UserService {
 }
 ```
 
+### 5. **Add a new file below of file structure in a project of spring boot
+
+File in the rescources, should copy from the repository to your spring boot project under the structure necessarily.
+
+src/main/resources/
+└── META-INF/
+    └── spring/
+        └── org.springframework.boot.autoconfigure.AutoConfiguration.imports
+
+
 ---
 
 ## ⚠️ Limitations
