@@ -29,10 +29,9 @@ public class PostgresClusterConfig {
     private DataSourceProp defaultSource;
     private List<DataSourceProp> write;
     private List<DataSourceProp> read;
-    private String driverClassName; 
+    private String driverClassName;
 
     @Bean
-    // @ConditionalOnExpression("${pg.write[0].url:#{null}} != null or ${pg.read[0].url:#{null}} != null")
     public DataSource routingDataSource() {
 
         if ((write == null || write.isEmpty()) && (read == null || read.isEmpty())) {
@@ -70,6 +69,7 @@ public class PostgresClusterConfig {
 
     private DataSource create(DataSourceProp prop) {
 
+        log.debug("driverClassName {}", driverClassName);
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(prop.getUrl());
         config.setUsername(prop.getUsername());

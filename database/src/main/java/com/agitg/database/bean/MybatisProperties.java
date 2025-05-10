@@ -11,5 +11,6 @@ import lombok.Data;
 public class MybatisProperties {
     private List<String> mapperLocations;
     private List<String> typeAliasesPackage;
-    private List<String> basePackages; // 支援 base-packages 掃描 mapper
+    private List<String> basePackages; 
+    private List<String> typeHandlersPackage;
 }

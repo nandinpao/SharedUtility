@@ -55,3 +55,5 @@ pg:
       - classpath:/mappers/**/*.xml
     base-packages:
       - com.example.pgstarter.mapper
+    type-handlers-package: 
+      - com.example.dao.typehandler

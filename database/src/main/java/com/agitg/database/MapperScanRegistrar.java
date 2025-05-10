@@ -12,7 +12,6 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.util.StringUtils;
 
 public class MapperScanRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
