@@ -78,12 +78,15 @@ pg:
       - com.example.pgstarter.entity
     base-packages:
       - com.example.pgstarter.mapper
+    type-handlers-package: 
+      - com.example.dao.typehandler
 ```
 
 ### 3. **Enable Mapper Scanning**
 ```java
 @SpringBootApplication
-@EnablePgMapperScan
+@Configuration
+@EnableConfigurationProperties
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
@@ -150,7 +153,6 @@ src/main/resources/
 | Java     | 21+     |
 | Spring Boot | 3.2+ |
 | MyBatis  | 3.0.4 (via `mybatis-spring-boot-starter`) |
-| PostgreSQL | 14+ (recommended) |
 | HikariCP | default in Spring Boot |
 | Maven    | 3.8+   |
 
