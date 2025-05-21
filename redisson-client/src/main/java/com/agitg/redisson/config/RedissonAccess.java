@@ -1,5 +1,7 @@
 package com.agitg.redisson.config;
 
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,8 +72,17 @@ public class RedissonAccess {
         getMap(map).put(key, value);
     }
 
-    public <K, V> V getFromMap(String mapName, K key, Class<V> valueType) {
-        Object raw = redissonClient.getMap(mapName).get(key);
+    /**
+     * 寫入 Hash (Map) 結構的某個欄位值，並設定整體過期時間
+     */
+    public <K, T> void putMapValue(String redisKey, K key, T value, long expireMillis) {
+        RMap<K, T> map = redissonClient.getMap(redisKey);
+        map.put(key, value);
+        map.expire(Duration.ofMillis(expireMillis));
+    }
+
+    public <K, V> V getFromMap(String redisKey, K key, Class<V> valueType) {
+        Object raw = redissonClient.getMap(redisKey).get(key);
         return MAPPER.convertValue(raw, valueType);
     }
 
@@ -79,8 +90,8 @@ public class RedissonAccess {
         getMap(map).remove(key);
     }
 
-    public <K, V> Map<K, V> getAllFromMap(String mapName, Class<K> keyClass, Class<V> valueClass) {
-        Map<Object, Object> raw = redissonClient.getMap(mapName).readAllMap();
+    public <K, V> Map<K, V> getAllFromMap(String redisKey, Class<K> keyClass, Class<V> valueClass) {
+        Map<Object, Object> raw = redissonClient.getMap(redisKey).readAllMap();
         return raw.entrySet().stream().collect(Collectors.toMap(
                 e -> MAPPER.convertValue(e.getKey(), keyClass),
                 e -> MAPPER.convertValue(e.getValue(), valueClass)));

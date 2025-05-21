@@ -2,6 +2,7 @@ package com.agitg.redisson.config;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
+import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
 import org.redisson.config.ReadMode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -11,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 
 import com.agitg.redisson.bean.RedissonProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.agitg.redisson.bean.RedissonProperties;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,7 +36,7 @@ public class RedissonAutoConfig {
                         .setAddress(redisPrefix + s.getAddress())
                         .setTimeout(props.getTimeout())
                         .setDatabase(props.getDatabase());
-                if (props.getPassword() != null) {
+                if (!props.getPassword().isBlank()) {
                     c.setPassword(props.getPassword());
                 }
             }
@@ -51,11 +51,13 @@ public class RedissonAutoConfig {
                         .setMasterConnectionPoolSize(cl.getMasterConnectionPoolSize())
                         .setReadMode(ReadMode.valueOf(cl.getReadMode().toUpperCase()));
                 cl.getNodes().forEach(node -> c.addNodeAddress(redisPrefix + node));
-                if (props.getPassword() != null) {
+                if (!props.getPassword().isBlank()) {
                     c.setPassword(props.getPassword());
                 }
             }
         }
+
+        config.setCodec(new JsonJacksonCodec());
 
         return Redisson.create(config);
     }
@@ -65,4 +67,5 @@ public class RedissonAutoConfig {
     public RedissonAccess redissonAccess(RedissonClient client, ObjectMapper objectMapper) {
         return new RedissonAccess(client, objectMapper);
     }
+
 }
