@@ -84,7 +84,7 @@ public class RedissonAccess {
 
     public <K, V> V getFromMap(String redisKey, K key, Class<V> valueType) {
         Object raw = redissonClient.getMap(redisKey).get(key);
-        return MAPPER.convertValue(raw, valueType);
+        return objectMapper.convertValue(raw, valueType);
     }
 
     public <K> void removeFromMap(String map, K key) {

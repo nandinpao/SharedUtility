@@ -54,6 +54,8 @@ public class MapperScanRegistrar implements ImportBeanDefinitionRegistrar, Envir
         }
 
         registry.registerBeanDefinition("pgMapperScannerConfigurer", builder.getBeanDefinition());
+
+        
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.agitg.database;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
@@ -24,7 +25,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, En
 
         List<String> basePackages = Binder.get(environment)
                 .bind(base_packages_config, List.class)
-                .orElse(null);
+                .orElse(Collections.emptyList());
 
         log.debug("BasePackages Location: {}", basePackages);
 
