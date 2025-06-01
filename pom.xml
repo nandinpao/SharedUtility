@@ -149,4 +149,12 @@
 
     </pluginRepositories>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>nandinpao</name>
+            <url>https://maven.pkg.github.com/nandinpao/SharedUtility</url>
+        </repository>
+    </distributionManagement>
+
 </project>

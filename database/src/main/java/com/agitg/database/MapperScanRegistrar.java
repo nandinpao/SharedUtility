@@ -13,33 +13,42 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class MapperScanRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
     private Environment environment;
 
-    @Override
-    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
-            BeanDefinitionRegistry registry) {
+    private static final String BASE_PACKAGES_PROPERTY = "pg.mapper.base-packages";
+    private static final String MAPPER_LOCATIONS_PROPERTY = "pg.mapper.mapper-locations";
+    private static final String TYPE_ALIASES_PACKAGE_PROPERTY = "pg.mapper.type-aliases-package";
 
+    @Override
+    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+
+        // 讀取設定值
         List<String> basePackages = Binder.get(environment)
-                .bind("pg.mapper.base-packages", Bindable.listOf(String.class))
+                .bind(BASE_PACKAGES_PROPERTY, Bindable.listOf(String.class))
                 .orElse(Collections.emptyList());
 
         List<String> mapperLocations = Binder.get(environment)
-                .bind("pg.mapper.mapper-locations", Bindable.listOf(String.class))
+                .bind(MAPPER_LOCATIONS_PROPERTY, Bindable.listOf(String.class))
                 .orElse(Collections.emptyList());
 
         List<String> typeAliasesPackages = Binder.get(environment)
-                .bind("pg.mapper.type-aliases-package", Bindable.listOf(String.class))
+                .bind(TYPE_ALIASES_PACKAGE_PROPERTY, Bindable.listOf(String.class))
                 .orElse(Collections.emptyList());
 
+        // 驗證設定
         if (basePackages.isEmpty() && mapperLocations.isEmpty()) {
             throw new IllegalArgumentException(
-                    "At least one of 'pg.mapper.base-packages' or 'pg.mapper.mapper-locations' must be specified.");
+                    "At least one of '" + BASE_PACKAGES_PROPERTY + "' or '" + MAPPER_LOCATIONS_PROPERTY
+                            + "' must be specified.");
         }
 
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder
-                .genericBeanDefinition(MapperScannerConfigurer.class);
+        // 建立 MapperScannerConfigurer BeanDefinition
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MapperScannerConfigurer.class);
 
         if (!basePackages.isEmpty()) {
             builder.addPropertyValue("basePackage", String.join(",", basePackages));
@@ -55,7 +64,6 @@ public class MapperScanRegistrar implements ImportBeanDefinitionRegistrar, Envir
 
         registry.registerBeanDefinition("pgMapperScannerConfigurer", builder.getBeanDefinition());
 
-        
     }
 
     @Override
