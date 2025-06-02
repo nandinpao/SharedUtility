@@ -9,8 +9,11 @@ import lombok.Data;
 @Data
 @ConfigurationProperties(prefix = "pg.mapper")
 public class MybatisProperties {
+
+    private Boolean enabled;
+
     private List<String> mapperLocations;
     private List<String> typeAliasesPackage;
-    private List<String> basePackages; 
+    private List<String> basePackages;
     private List<String> typeHandlersPackage;
 }

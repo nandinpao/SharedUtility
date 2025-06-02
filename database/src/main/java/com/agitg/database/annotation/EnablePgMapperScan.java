@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 import org.springframework.context.annotation.Import;
 
-import com.agitg.database.MapperScanRegistrar;
+import com.agitg.database.aop.mybatis.MapperScanRegistrar;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

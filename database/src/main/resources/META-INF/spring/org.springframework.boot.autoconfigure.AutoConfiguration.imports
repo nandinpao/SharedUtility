@@ -1,2 +1,2 @@
-com.agitg.database.MybatisConfig
+com.agitg.database.aop.mybatis.MybatisConfig
 com.agitg.database.PostgresClusterConfig

@@ -1,4 +1,4 @@
-package com.agitg.database;
+package com.agitg.database.aop.mybatis;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +10,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.annotation.MapperScannerRegistrar;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
+@ConditionalOnProperty(name = "pg.mapper.enabled", havingValue = "true")
 @EnableConfigurationProperties({ MybatisProperties.class })
 @Import(MapperScannerRegistrar.class)
 public class MybatisConfig {
@@ -66,5 +68,4 @@ public class MybatisConfig {
         return new SqlSessionTemplate(factory);
     }
 
-    
 }

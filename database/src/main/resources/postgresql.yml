@@ -48,12 +48,12 @@ pg:
         pool-name: Slave2Pool
   driver-class-name: org.postgresql.Driver
 
+  jpa:
+    enabled: true
+    basePackage:
+      - com.example.demo.repository
+      
   mapper:
-    type-aliases-package: 
-      - com.example.pgstarter.entity
-    mapper-locations: 
-      - classpath:/mappers/**/*.xml
+    enabled: false
     base-packages:
       - com.example.pgstarter.mapper
-    type-handlers-package: 
-      - com.example.dao.typehandler
