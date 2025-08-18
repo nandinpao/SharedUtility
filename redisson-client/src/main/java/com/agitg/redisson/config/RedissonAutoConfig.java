@@ -14,7 +14,9 @@ import com.agitg.redisson.bean.RedissonProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 @EnableConfigurationProperties(RedissonProperties.class)
@@ -36,9 +38,11 @@ public class RedissonAutoConfig {
                         .setAddress(redisPrefix + s.getAddress())
                         .setTimeout(props.getTimeout())
                         .setDatabase(props.getDatabase());
+
                 if (!props.getPassword().isBlank()) {
                     c.setPassword(props.getPassword());
                 }
+            
             }
             case "cluster" -> {
                 var cl = props.getCluster();
