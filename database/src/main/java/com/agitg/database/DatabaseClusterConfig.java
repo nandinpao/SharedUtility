@@ -11,6 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import com.agitg.database.bean.DataSourceProp;
 import com.zaxxer.hikari.HikariConfig;
@@ -24,14 +25,15 @@ import lombok.extern.slf4j.Slf4j;
 @Conditional(PgRoutingCondition.class)
 @Data
 @Slf4j
-public class PostgresClusterConfig {
+public class DatabaseClusterConfig {
 
     private DataSourceProp defaultSource;
     private List<DataSourceProp> write;
     private List<DataSourceProp> read;
-    private String driverClassName;
 
-    @Bean
+
+    @Bean(name = "dataSource")
+    @Primary
     public DataSource routingDataSource() {
 
         if ((write == null || write.isEmpty()) && (read == null || read.isEmpty())) {
@@ -69,12 +71,12 @@ public class PostgresClusterConfig {
 
     private DataSource create(DataSourceProp prop) {
 
-        log.debug("driverClassName {}", driverClassName);
+        log.debug("driverClassName {}", prop.getDriverClassName());
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(prop.getUrl());
         config.setUsername(prop.getUsername());
         config.setPassword(prop.getPassword());
-        config.setDriverClassName(driverClassName);
+        config.setDriverClassName(prop.getDriverClassName());
 
         if (prop.getHikari() != null) {
             config.setMinimumIdle(prop.getHikari().getMinimumIdle());

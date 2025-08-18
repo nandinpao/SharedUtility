@@ -5,6 +5,7 @@ pg:
       username: writer
       password: secret
       isDefault: true
+      driver-class-name: org.postgresql.Driver
       hikari:
         minimum-idle: 3
         maximum-pool-size: 5
@@ -16,6 +17,7 @@ pg:
       url: jdbc:postgresql://master2.db:5432/app
       username: writer
       password: secret
+      driver-class-name: org.postgresql.Driver
       hikari:
         minimum-idle: 3
         maximum-pool-size: 5
@@ -28,6 +30,7 @@ pg:
       url: jdbc:postgresql://slave1.db:5432/app
       username: reader
       password: secret
+      driver-class-name: org.postgresql.Driver
       hikari:
         minimum-idle: 3
         maximum-pool-size: 5
@@ -39,6 +42,7 @@ pg:
       url: jdbc:postgresql://slave2.db:5432/app
       username: reader
       password: secret
+      driver-class-name: org.postgresql.Driver
       hikari:
         minimum-idle: 3
         maximum-pool-size: 5
@@ -46,14 +50,26 @@ pg:
         max-lifetime: 1800000
         connection-timeout: 60000
         pool-name: Slave2Pool
-  driver-class-name: org.postgresql.Driver
 
   jpa:
     enabled: true
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+        hbm2ddl:
+          auto: validate
     basePackage:
       - com.example.demo.repository
-      
-  mapper:
+
+  mybatis:
     enabled: false
+    configuration:
+      map-underscore-to-camel-case: true
+      default-statement-timeout: 5
+      cache-enabled: false
+      log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
     base-packages:
       - com.example.pgstarter.mapper

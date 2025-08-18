@@ -12,5 +12,6 @@ public class DataSourceProp {
     private String username;
     private String password;
     private Boolean isDefault = false;
+    private String driverClassName;
     private HikariSetting hikari;
 }

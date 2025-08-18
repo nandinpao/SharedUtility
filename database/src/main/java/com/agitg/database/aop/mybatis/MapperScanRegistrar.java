@@ -20,7 +20,7 @@ public class MapperScanRegistrar implements ImportBeanDefinitionRegistrar, Envir
 
     private Environment environment;
 
-    private static final String BASE_PACKAGES_PROPERTY = "pg.mapper.base-packages";
+    private static final String BASE_PACKAGES_PROPERTY = "pg.mybatis.base-packages";
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {

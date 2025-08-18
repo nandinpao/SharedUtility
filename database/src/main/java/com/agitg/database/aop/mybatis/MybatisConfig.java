@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -18,13 +19,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import com.agitg.database.bean.MybatisConfigurationProperties;
 import com.agitg.database.bean.MybatisProperties;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "pg.mapper.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "pg.mybatis.enabled", havingValue = "true")
 @EnableConfigurationProperties({ MybatisProperties.class })
 @Import(MapperScannerRegistrar.class)
 public class MybatisConfig {
@@ -36,8 +38,28 @@ public class MybatisConfig {
 
         log.debug("Start Mybatis .....");
 
+        // 加入 MyBatis 配置物件
+        MybatisConfigurationProperties config = props.getConfiguration();
+        org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
+
+        if (config != null) {
+            if (config.getMapUnderscoreToCamelCase() != null) {
+                configuration.setMapUnderscoreToCamelCase(config.getMapUnderscoreToCamelCase());
+            }
+            if (config.getDefaultStatementTimeout() != null) {
+                configuration.setDefaultStatementTimeout(config.getDefaultStatementTimeout());
+            }
+            if (config.getCacheEnabled() != null) {
+                configuration.setCacheEnabled(config.getCacheEnabled());
+            }
+            if (config.getLogImpl() != null) {
+                configuration.setLogImpl((Class<? extends Log>) config.getLogImpl());
+            }
+        }
+
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
         factoryBean.setDataSource(dataSource);
+        factoryBean.setConfiguration(configuration);
 
         if (props.getTypeAliasesPackage() != null && !props.getTypeAliasesPackage().isEmpty()) {
             factoryBean.setTypeAliasesPackage(String.join(",", props.getTypeAliasesPackage()));

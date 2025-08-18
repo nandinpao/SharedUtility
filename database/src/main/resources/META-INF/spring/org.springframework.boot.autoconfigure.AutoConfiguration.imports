@@ -1,2 +1,3 @@
+com.agitg.database.aop.jpa.JPAConfig
 com.agitg.database.aop.mybatis.MybatisConfig
-com.agitg.database.PostgresClusterConfig
+com.agitg.database.DatabaseClusterConfig
