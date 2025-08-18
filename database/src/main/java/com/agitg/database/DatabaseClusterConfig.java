@@ -7,34 +7,41 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.mybatis.spring.annotation.MapperScannerRegistrar;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
 
 import com.agitg.database.bean.DataSourceProp;
+import com.agitg.database.bean.MybatisProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
+@Data
 @Configuration
 @ConfigurationProperties(prefix = "pg")
-@Conditional(PgRoutingCondition.class)
-@Data
-@Slf4j
+@EnableConfigurationProperties({ MybatisProperties.class })
+@Import(MapperScannerRegistrar.class)
+@Component
 public class DatabaseClusterConfig {
 
     private DataSourceProp defaultSource;
     private List<DataSourceProp> write;
     private List<DataSourceProp> read;
 
-
-    @Bean(name = "dataSource")
     @Primary
+    @Bean(name = "dataSource")
     public DataSource routingDataSource() {
+
+        log.debug("Start DatabaseClusterConfig...... ");
 
         if ((write == null || write.isEmpty()) && (read == null || read.isEmpty())) {
             throw new IllegalStateException("No pg.master or pg.read configuration found.");
@@ -71,7 +78,8 @@ public class DatabaseClusterConfig {
 
     private DataSource create(DataSourceProp prop) {
 
-        log.debug("driverClassName {}", prop.getDriverClassName());
+        log.debug(">>> driverClassName: {} --> {}", prop.getName(), prop.getDriverClassName());
+
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(prop.getUrl());
         config.setUsername(prop.getUsername());
@@ -89,4 +97,5 @@ public class DatabaseClusterConfig {
 
         return new HikariDataSource(config);
     }
+
 }

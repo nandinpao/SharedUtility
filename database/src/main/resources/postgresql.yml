@@ -61,15 +61,19 @@ pg:
         order_updates: true
         hbm2ddl:
           auto: validate
-    basePackage:
-      - com.example.demo.repository
 
+  pg:
   mybatis:
-    enabled: false
+    enabled: true
     configuration:
       map-underscore-to-camel-case: true
       default-statement-timeout: 5
       cache-enabled: false
       log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
-    base-packages:
-      - com.example.pgstarter.mapper
+    type-aliases-package:
+      - com.agitg.auth.domain.model
+    mapper-locations:
+      - classpath*:mapper/*.xml
+    mapper-scan-packages:
+      - com.agitg.auth.infrastructure.mybatis.mapper
+      - com.agitg.auth.dao.mapper

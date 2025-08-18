@@ -14,7 +14,7 @@ public class MybatisProperties {
 
     private List<String> mapperLocations;
     private List<String> typeAliasesPackage;
-    private List<String> basePackages;
+    private List<String> mapperscanpackages;
     private List<String> typeHandlersPackage;
 
     private MybatisConfigurationProperties configuration;
