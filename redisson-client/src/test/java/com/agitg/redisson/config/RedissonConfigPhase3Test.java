@@ -19,7 +19,7 @@ class RedissonConfigPhase3Test {
         props.getTls().setEnabled(true); props.getTls().setRequired(true);
         var config = RedissonClientConfigFactory.create(props, new ObjectMapper());
         assertEquals("rediss://localhost:6380", config.useSingleServer().getAddress());
-        assertEquals(SslVerificationMode.STRICT, config.useSingleServer().getSslVerificationMode());
+        assertEquals(SslVerificationMode.STRICT, config.getSslVerificationMode());
         assertEquals("JsonJacksonCodec", config.getCodec().getClass().getSimpleName());
     }
     @Test void clusterTlsUsesStrictVerificationOnClusterConfig() {
@@ -37,7 +37,7 @@ class RedissonConfigPhase3Test {
         p.setCluster(cluster);
 
         var config = RedissonClientConfigFactory.create(p, new ObjectMapper());
-        assertEquals(SslVerificationMode.STRICT, config.useClusterServers().getSslVerificationMode());
+        assertEquals(SslVerificationMode.STRICT, config.getSslVerificationMode());
         assertTrue(config.useClusterServers().getNodeAddresses().stream()
                 .allMatch(address -> address.startsWith("rediss://")));
     }

@@ -5,9 +5,9 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import org.redisson.api.AutoClaimResult;
+import org.redisson.api.stream.AutoClaimResult;
 import org.redisson.api.RStream;
-import org.redisson.api.StreamMessageId;
+import org.redisson.api.stream.StreamMessageId;
 
 /** Cursor-driven XAUTOCLAIM: empty pages may still have a next cursor. */
 public final class StreamPendingClaimer {

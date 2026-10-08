@@ -27,12 +27,14 @@ public final class RedissonClientConfigFactory {
         safeMapper.deactivateDefaultTyping();
         Config config = new Config();
         config.setCodec(new JsonJacksonCodec(safeMapper));
+        // Redisson 4.x centralizes credentials and TLS at Config level.
+        // Preserve Jackson 2 JsonJacksonCodec so historical Redis values remain readable.
+        if (transport.enabled()) config.setSslVerificationMode(SslVerificationMode.STRICT);
+        if (hasText(props.getPassword())) config.setPassword(props.getPassword());
         if ("single".equals(props.getMode())) {
             var c = config.useSingleServer()
                     .setAddress(transport.endpoint(props.getSingle().getAddress()))
                     .setTimeout(props.getTimeout()).setDatabase(props.getDatabase());
-            if (transport.enabled()) c.setSslVerificationMode(SslVerificationMode.STRICT);
-            if (hasText(props.getPassword())) c.setPassword(props.getPassword());
         } else {
             var cluster = props.getCluster();
             if (cluster.getScanInterval() <= 0 || cluster.getRetryAttempts() < 0
@@ -57,10 +59,8 @@ public final class RedissonClientConfigFactory {
                     .setSlaveConnectionPoolSize(cluster.getSlaveConnectionPoolSize())
                     .setMasterConnectionPoolSize(cluster.getMasterConnectionPoolSize())
                     .setReadMode(readMode);
-            if (transport.enabled()) c.setSslVerificationMode(SslVerificationMode.STRICT);
             List<String> nodes = cluster.getNodes();
             nodes.forEach(hostPort -> c.addNodeAddress(transport.endpoint(hostPort)));
-            if (hasText(props.getPassword())) c.setPassword(props.getPassword());
         }
         return config;
     }

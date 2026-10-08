@@ -1,8 +1,9 @@
 package com.agitg.redisson.stream;
 
 import java.util.Map;
+import com.agitg.sharedutility.stream.RedisStreamId;
 import java.util.Objects;
-import org.redisson.api.StreamMessageId;
+import org.redisson.api.stream.StreamMessageId;
 
 /** Context-preserving wrapper for multi-stream callbacks. */
 public class StreamMessageWrapper {
@@ -17,6 +18,15 @@ public class StreamMessageWrapper {
     public void setStreamKey(String key) { streamKey=key; }
     public StreamMessageId getMessageId() { return messageId; }
     public void setMessageId(StreamMessageId id) { messageId=id; }
+    /** Vendor-neutral Redis entry ID for callers migrating from Redisson 3.x. */
+    public RedisStreamId getPortableMessageId() {
+        return messageId == null ? null : RedisStreamId.parse(messageId.toString());
+    }
+    /** Accept a stable Stream ID without exposing Redisson package names. */
+    public void setPortableMessageId(RedisStreamId id) {
+        messageId = id == null ? null : new StreamMessageId(
+                id.millisecondsSignedLongExact(), id.sequenceSignedLongExact());
+    }
     public Map<String, String> getBody() { return body; }
     public void setBody(Map<String, String> body) { this.body=body; }
     public String get(String key) { return body==null ? null : body.get(key); }

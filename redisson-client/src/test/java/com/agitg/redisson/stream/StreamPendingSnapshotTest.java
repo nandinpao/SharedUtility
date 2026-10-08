@@ -2,7 +2,7 @@ package com.agitg.redisson.stream;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.PendingResult;
+import org.redisson.api.stream.PendingResult;
 import org.redisson.api.RStream;
 import org.redisson.api.RedissonClient;
 import static org.junit.jupiter.api.Assertions.*;

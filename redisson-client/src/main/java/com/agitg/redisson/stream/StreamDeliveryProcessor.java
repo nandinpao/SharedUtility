@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.redisson.api.PendingEntry;
+import org.redisson.api.stream.PendingEntry;
 import org.redisson.api.RStream;
 import org.redisson.api.RedissonClient;
-import org.redisson.api.StreamMessageId;
+import org.redisson.api.stream.StreamMessageId;
 import org.redisson.api.stream.StreamAddArgs;
 
 /**
@@ -92,7 +92,7 @@ public final class StreamDeliveryProcessor {
         if (pending == null || pending.isEmpty() || !id.equals(pending.get(0).getId())) {
             return 0;
         }
-        long count = pending.get(0).getLastTimeDelivered();
+        long count = pending.get(0).getDeliveryCount();
         return (int) Math.min(Integer.MAX_VALUE, Math.max(0L, count));
     }
 

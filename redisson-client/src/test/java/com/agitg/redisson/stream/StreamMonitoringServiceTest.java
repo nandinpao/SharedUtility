@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.Map;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.PendingResult;
+import org.redisson.api.stream.PendingResult;
 import org.redisson.api.RStream;
 import org.redisson.api.RedissonClient;
 import static org.junit.jupiter.api.Assertions.*;
