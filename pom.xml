@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.6</version>
+        <version>4.0.8</version>
         <relativePath/>
     </parent>
 
@@ -24,11 +24,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.enablePreview>false</maven.compiler.enablePreview>
         <lombok.version>1.18.46</lombok.version>
-        <spring.boot.version>4.0.6</spring.boot.version>
         <mybatis.plus.version>3.5.17</mybatis.plus.version>
-        <spring.framework.version>7.0.7</spring.framework.version>
-        <spring.boot.hibernate.version>${spring.boot.version}</spring.boot.hibernate.version>
-        <aspectjweaver.version>1.9.25.1</aspectjweaver.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -37,37 +33,6 @@
         <module>database</module>
         <module>redisson-client</module>
     </modules>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-jdbc</artifactId>
-                <version>${spring.framework.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-data-jpa</artifactId>
-                <version>${spring.boot.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-aop</artifactId>
-                <version>${spring.framework.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjweaver</artifactId>
-                <version>${aspectjweaver.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -80,7 +45,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -122,6 +86,11 @@
                         <failIfNoTests>true</failIfNoTests>
                         <useModulePath>false</useModulePath>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.5.4</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>

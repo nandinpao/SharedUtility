@@ -70,11 +70,27 @@ public class RedissonAutoConfig {
         return new StreamDeliveryProcessor(client, properties.toPolicy(), deadLetterProperties.toPolicy());
     }
 
-    @Bean
-    @ConditionalOnMissingBean
+    @Bean(name = "streamTaskConsumer")
+    @ConditionalOnMissingBean(StreamTaskConsumer.class)
+    public StreamTaskConsumer streamTaskConsumerBean(RedissonClient redissonClient, AutoClaimPolicyResolver resolver,
+                                                      StreamDeliveryProcessor processor) {
+        return streamTaskConsumer(redissonClient, resolver, processor);
+    }
+
+    /** Phase 3.x direct-call API retained; Spring uses streamTaskConsumerBean(). */
     public StreamTaskConsumer streamTaskConsumer(RedissonClient redissonClient, AutoClaimPolicyResolver resolver,
                                                   StreamDeliveryProcessor processor) {
         return new StreamTaskConsumer(redissonClient, resolver, processor);
+    }
+
+    /**
+     * @deprecated 1.x direct-call compatibility overload. Spring wiring uses the
+     * three-argument bean path so bounded retry/DLQ policy stays authoritative.
+     */
+    @Deprecated(since = "2.0", forRemoval = false)
+    public StreamTaskConsumer streamTaskConsumer(RedissonClient redissonClient, AutoClaimPolicyResolver resolver) {
+        return new StreamTaskConsumer(redissonClient, resolver,
+                new StreamDeliveryProcessor(redissonClient, com.agitg.redisson.stream.StreamRetryPolicy.defaults()));
     }
 
     @Bean
@@ -99,10 +115,24 @@ public class RedissonAutoConfig {
         return new StreamMonitoringService(snapshot, registry, props);
     }
 
-    @Bean(destroyMethod = "shutdown")
-    @ConditionalOnMissingBean
-    public RedissonClient redissonClient(@Qualifier("redissonObjectMapper") ObjectMapper mapper) {
+    @Bean(name = "redissonClient", destroyMethod = "shutdown")
+    @ConditionalOnMissingBean(RedissonClient.class)
+    public RedissonClient redissonClientBean(@Qualifier("redissonObjectMapper") ObjectMapper mapper) {
+        return redissonClient(mapper);
+    }
+
+    /** Phase 3.x direct-call API retained; Spring uses redissonClientBean(). */
+    public RedissonClient redissonClient(ObjectMapper mapper) {
         return Redisson.create(RedissonClientConfigFactory.create(props, mapper));
+    }
+
+    /**
+     * @deprecated 1.x direct-call compatibility overload. Prefer the Spring-managed
+     * RedissonClient bean; direct callers own and must shutdown the returned client.
+     */
+    @Deprecated(since = "2.0", forRemoval = false)
+    public RedissonClient redissonClient() {
+        return redissonClient(redissonObjectMapper());
     }
 
     @Bean

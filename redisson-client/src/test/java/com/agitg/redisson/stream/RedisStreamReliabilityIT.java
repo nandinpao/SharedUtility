@@ -16,6 +16,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.redisson.Redisson;
 import org.redisson.api.RStream;
 import org.redisson.api.RedissonClient;
@@ -30,9 +32,12 @@ import org.testcontainers.utility.DockerImageName;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Actual Redis 7.4 integration: invoked ONLY by Maven -Predis-it with Docker. */
+@Execution(ExecutionMode.SAME_THREAD)
 class RedisStreamReliabilityIT {
     private static GenericContainer<?> container;
-    private static RedissonClient redis;
+    // Fault-injection tests kill connections or pause Redis. A static client would
+    // carry that broken connection state into the next test method.
+    private RedissonClient redis;
     private final AutoClaimPolicy policy = new AutoClaimPolicy(true,
             Duration.ofMillis(120), Duration.ofMillis(65), 10, 3);
     private ExecutorService executor;
@@ -45,16 +50,21 @@ class RedisStreamReliabilityIT {
         container = new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine"))
                 .withExposedPorts(6379);
         container.start();
-        Config config = new Config();
-        config.useSingleServer().setAddress("redis://" + container.getHost() + ":" + container.getMappedPort(6379));
-        config.setCodec(new JsonJacksonCodec());
-        redis = Redisson.create(config);
     }
     @AfterAll static void stopRedis() {
-        if (redis != null) redis.shutdown();
         if (container != null) container.stop();
     }
     @BeforeEach void prepare() {
+        // Redis itself is shared to limit container startup cost, but a Redisson
+        // client belongs to ONE test. Previous CLIENT KILL/PAUSE tests must not
+        // poison the connection pool of subsequent test methods.
+        Config config = new Config();
+        config.useSingleServer()
+                .setAddress("redis://" + container.getHost() + ":" + container.getMappedPort(6379))
+                .setConnectTimeout(10_000)
+                .setTimeout(10_000); // Docker Desktop CI only; production defaults untouched.
+        config.setCodec(new JsonJacksonCodec());
+        redis = Redisson.create(config);
         executor = Executors.newFixedThreadPool(3);
         String unique = UUID.randomUUID().toString().replace("-", "");
         streamKey = "qa:stream:" + unique;
@@ -68,9 +78,30 @@ class RedisStreamReliabilityIT {
         service = new StreamGroupConsumerService(redis, resolver, consumer, processor);
     }
     @AfterEach void cleanup() {
-        service.destroy();
-        consumer.destroy();
-        executor.shutdownNow();
+        // @BeforeEach may fail on its first XADD (e.g. Redis is temporarily
+        // paused). Teardown must not replace that error with an NPE and must
+        // always release whichever resources were initialized successfully.
+        try {
+            if (service != null) service.destroy();
+        } finally {
+            try {
+                if (consumer != null) consumer.destroy();
+            } finally {
+                try {
+                    if (executor != null) {
+                        executor.shutdownNow();
+                        try {
+                            // Do not leak a polling worker into the next test.
+                            executor.awaitTermination(2, TimeUnit.SECONDS);
+                        } catch (InterruptedException interrupted) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                } finally {
+                    if (redis != null) redis.shutdown();
+                }
+            }
+        }
     }
 
     @Test void successfulCallbackAcknowledgesAndRemovesFromPel() throws Exception {

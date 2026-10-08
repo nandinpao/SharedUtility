@@ -1,6 +1,7 @@
 package com.agitg.redisson.stream;
 
 import java.util.concurrent.ThreadLocalRandom;
+import com.agitg.sharedutility.redisson.stream.ReconnectDelayPolicy;
 
 /** Exponential error backoff with bounded equal-jitter. No unbounded tight retry loops. */
 public final class StreamReconnectBackoff {
@@ -23,15 +24,11 @@ public final class StreamReconnectBackoff {
 
     /** Pure calculation for repeatable testing; jitterUnit must be within [0,1]. */
     public long delayMillis(double jitterUnit) {
-        if (jitterUnit < 0 || jitterUnit > 1 || !Double.isFinite(jitterUnit)) {
-            throw new IllegalArgumentException("jitterUnit out of range");
-        }
-        consecutiveFailures = Math.min(consecutiveFailures + 1, 31);
-        long cap = initialMillis;
-        for (int i = 1; i < consecutiveFailures; i++) {
-            cap = cap > maxMillis / 2 ? maxMillis : Math.min(maxMillis, cap * 2);
-        }
-        return Math.max(1L, (long) (cap / 2.0 + (cap / 2.0) * jitterUnit));
+        // Calculate before incrementing: invalid jitter must NOT mutate state.
+        int nextFailures = Math.min(consecutiveFailures + 1, 31);
+        long result = ReconnectDelayPolicy.delayMillis(initialMillis, maxMillis, nextFailures, jitterUnit);
+        consecutiveFailures = nextFailures;
+        return result;
     }
     public boolean pause() {
         long millis = delayMillis(ThreadLocalRandom.current().nextDouble());

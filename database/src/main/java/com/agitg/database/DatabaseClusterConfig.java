@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -60,7 +61,8 @@ public class DatabaseClusterConfig {
     private List<DataSourceProp> read;
 
     @Primary
-    @Bean(name = "dataSource")
+    @Bean(name = "dataSource", destroyMethod = "close")
+    @ConditionalOnMissingBean(DataSource.class)
     public DataSource routingDataSource() {
         log.debug("Start DatabaseClusterConfig......");
 
@@ -90,47 +92,56 @@ public class DatabaseClusterConfig {
         Map<Object, Object> targets = new HashMap<>();
         List<Object> writeKeys = new ArrayList<>();
         List<Object> readKeys = new ArrayList<>();
+        List<HikariDataSource> owned = new ArrayList<>();
 
-        for (DataSourceProp w : writeList) {
-            DataSourceProp normalized = normalize(w, "write-" + (writeKeys.size() + 1), false);
-            DataSource ds = create(normalized);
-            targets.put(normalized.getName(), ds);
-            writeKeys.add(normalized.getName());
+        try {
+            for (DataSourceProp w : writeList) {
+                DataSourceProp normalized = normalize(w, "write-" + (writeKeys.size() + 1), false);
+                HikariDataSource ds = create(normalized);
+                owned.add(ds);
+                targets.put(normalized.getName(), ds);
+                writeKeys.add(normalized.getName());
+            }
+
+            for (DataSourceProp r : readList) {
+                DataSourceProp normalized = normalize(r, "read-" + (readKeys.size() + 1), false);
+                HikariDataSource ds = create(normalized);
+                owned.add(ds);
+                targets.put(normalized.getName(), ds);
+                readKeys.add(normalized.getName());
+            }
+
+            Object defaultKey = layout.defaultName();
+            ManagedRoutingDataSource routing = new ManagedRoutingDataSource(writeKeys, readKeys, defaultKey, owned);
+            routing.setTargetDataSources(targets);
+            routing.setDefaultTargetDataSource(targets.get(defaultKey));
+
+            log.info("PostgreSQL datasource routing initialized. mode=cluster, default={}, writes={}, reads={}",
+                    defaultKey, writeKeys, readKeys);
+            return routing;
+        } catch (RuntimeException | Error failure) {
+            ManagedRoutingDataSource.closeAfterFailure(owned, failure);
+            throw failure;
         }
-
-        for (DataSourceProp r : readList) {
-            DataSourceProp normalized = normalize(r, "read-" + (readKeys.size() + 1), false);
-            DataSource ds = create(normalized);
-            targets.put(normalized.getName(), ds);
-            readKeys.add(normalized.getName());
-        }
-
-        Object defaultKey = layout.defaultName();
-
-        RoutingDataSource routing = new RoutingDataSource(writeKeys, readKeys, defaultKey);
-        routing.setTargetDataSources(targets);
-        routing.setDefaultTargetDataSource(targets.get(defaultKey));
-
-        log.info("PostgreSQL datasource routing initialized. mode=cluster, default={}, writes={}, reads={}",
-                defaultKey, writeKeys, readKeys);
-
-        return routing;
     }
 
     private DataSource createSingleRoutingDataSource(DataSourceProp source) {
         DataSourceProp normalized = normalize(source, "single", true);
-        Map<Object, Object> targets = new HashMap<>();
-        DataSource ds = create(normalized);
-        targets.put(normalized.getName(), ds);
+        HikariDataSource ds = create(normalized);
+        try {
+            Map<Object, Object> targets = new HashMap<>();
+            targets.put(normalized.getName(), ds);
 
-        List<Object> keys = Collections.singletonList(normalized.getName());
-        RoutingDataSource routing = new RoutingDataSource(keys, keys, normalized.getName());
-        routing.setTargetDataSources(targets);
-        routing.setDefaultTargetDataSource(ds);
-
-        log.info("PostgreSQL datasource routing initialized. mode=single, default={}", normalized.getName());
-
-        return routing;
+            List<Object> keys = Collections.singletonList(normalized.getName());
+            ManagedRoutingDataSource routing = new ManagedRoutingDataSource(keys, keys, normalized.getName(), List.of(ds));
+            routing.setTargetDataSources(targets);
+            routing.setDefaultTargetDataSource(ds);
+            log.info("PostgreSQL datasource routing initialized. mode=single, default={}", normalized.getName());
+            return routing;
+        } catch (RuntimeException | Error failure) {
+            ManagedRoutingDataSource.closeAfterFailure(List.of(ds), failure);
+            throw failure;
+        }
     }
 
     private DataSourceTopologyValidator.Node toNode(DataSourceProp prop) {
@@ -162,7 +173,7 @@ public class DatabaseClusterConfig {
         return prop;
     }
 
-    private DataSource create(DataSourceProp prop) {
+    private HikariDataSource create(DataSourceProp prop) {
         log.debug(">>> PostgreSQL DataSource: {} -> {}", prop.getName(), prop.getUrl());
 
         HikariConfig config = new HikariConfig();

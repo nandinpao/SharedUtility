@@ -7,11 +7,12 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import com.baomidou.mybatisplus.spring.MybatisSqlSessionFactoryBean;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MybatisConfig {
 
     @Bean
+    @ConditionalOnMissingBean(SqlSessionFactory.class)
     public SqlSessionFactory sqlSessionFactory(
             DataSource dataSource,
             MybatisProperties props) throws Exception {
@@ -85,12 +87,14 @@ public class MybatisConfig {
     }
 
     @Bean
+    @ConditionalOnMissingBean(SqlSessionTemplate.class)
     public SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory factory) {
         return new SqlSessionTemplate(factory);
     }
 
     /** A single canonical scan key; do not silently scan entity packages. */
     @Bean
+    @ConditionalOnMissingBean(MapperScannerConfigurer.class)
     public static MapperScannerConfigurer mapperScannerConfigurer(Environment env) {
         Binder binder = Binder.get(env);
         List<String> packages = binder.bind("pg.mybatis.mapper-scan-packages",
@@ -100,8 +104,24 @@ public class MybatisConfig {
             throw new IllegalStateException("pg.mybatis.mapper-scan-packages is required when pg.mybatis.enabled=true");
         }
         MapperScannerConfigurer config = new MapperScannerConfigurer();
-        config.setSqlSessionFactoryBeanName("sqlSessionFactory");
+        // Default remains the historical bean name. Consumers with a custom
+        // SqlSessionFactory bean may explicitly select its name without creating
+        // a competing scanner or changing shared package scanning semantics.
+        String factoryBeanName = binder.bind("pg.mybatis.sql-session-factory-bean-name", String.class)
+                .orElse("sqlSessionFactory").trim();
+        if (factoryBeanName.isEmpty()) {
+            throw new IllegalStateException("pg.mybatis.sql-session-factory-bean-name must not be blank");
+        }
+        config.setSqlSessionFactoryBeanName(factoryBeanName);
         config.setBasePackage(String.join(",", packages));
         return config;
+    }
+    /**
+     * @deprecated Diagnostic hook present in 1.x. It no longer performs reflective
+     * classloader probing because that is unsafe on modern JDKs.
+     */
+    @Deprecated(since = "2.0", forRemoval = false)
+    public void probe() {
+        log.debug("MybatisConfig.probe() is retained as a compatibility no-op");
     }
 }

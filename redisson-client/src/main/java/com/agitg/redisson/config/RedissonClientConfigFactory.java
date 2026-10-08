@@ -27,13 +27,11 @@ public final class RedissonClientConfigFactory {
         safeMapper.deactivateDefaultTyping();
         Config config = new Config();
         config.setCodec(new JsonJacksonCodec(safeMapper));
-        if (transport.enabled()) {
-            config.setSslVerificationMode(SslVerificationMode.STRICT);
-        }
         if ("single".equals(props.getMode())) {
             var c = config.useSingleServer()
                     .setAddress(transport.endpoint(props.getSingle().getAddress()))
                     .setTimeout(props.getTimeout()).setDatabase(props.getDatabase());
+            if (transport.enabled()) c.setSslVerificationMode(SslVerificationMode.STRICT);
             if (hasText(props.getPassword())) c.setPassword(props.getPassword());
         } else {
             var cluster = props.getCluster();
@@ -59,6 +57,7 @@ public final class RedissonClientConfigFactory {
                     .setSlaveConnectionPoolSize(cluster.getSlaveConnectionPoolSize())
                     .setMasterConnectionPoolSize(cluster.getMasterConnectionPoolSize())
                     .setReadMode(readMode);
+            if (transport.enabled()) c.setSslVerificationMode(SslVerificationMode.STRICT);
             List<String> nodes = cluster.getNodes();
             nodes.forEach(hostPort -> c.addNodeAddress(transport.endpoint(hostPort)));
             if (hasText(props.getPassword())) c.setPassword(props.getPassword());

@@ -44,8 +44,8 @@ import com.agitg.database.it.mapper.RouteRecordMapper;
  * separate environment test, and is outside this IT's guarantee.
  */
 class PostgresRoutingIT {
-    private static final PostgreSQLContainer<?> WRITER = new PostgreSQLContainer<>("postgres:16-alpine");
-    private static final PostgreSQLContainer<?> READER = new PostgreSQLContainer<>("postgres:16-alpine");
+    private static final PostgreSQLContainer WRITER = new PostgreSQLContainer("postgres:16-alpine");
+    private static final PostgreSQLContainer READER = new PostgreSQLContainer("postgres:16-alpine");
     private AnnotationConfigApplicationContext context;
 
     @BeforeAll static void boot() throws Exception {
@@ -55,7 +55,7 @@ class PostgresRoutingIT {
         seed(READER, "reader");
     }
 
-    private static void seed(PostgreSQLContainer<?> container, String name) throws Exception {
+    private static void seed(PostgreSQLContainer container, String name) throws Exception {
         try (var conn = DriverManager.getConnection(container.getJdbcUrl(), container.getUsername(), container.getPassword());
              var statement = conn.createStatement()) {
             statement.execute("CREATE TABLE route_marker(marker VARCHAR(30) NOT NULL)");
@@ -198,4 +198,30 @@ class PostgresRoutingIT {
                 () -> context.getBean(OuterService.class).illegallySwitchToWriter());
         assertTrue(e.getMessage().contains("active transaction"));
     }
+    @Test void phase42ManagedHikariPoolClosesOnRealPostgres() throws Exception {
+        var node = new com.agitg.database.bean.DataSourceProp();
+        node.setName("phase42-postgres-pool");
+        node.setUrl(WRITER.getJdbcUrl());
+        node.setUsername(WRITER.getUsername());
+        node.setPassword(WRITER.getPassword());
+        node.setDriverClassName("org.postgresql.Driver");
+        node.setIsDefault(true);
+        var config = new DatabaseClusterConfig();
+        config.setSingle(node);
+        DataSource managed = config.routingDataSource();
+        try {
+            // This test calls the @Bean factory method directly, outside a Spring context.
+            // Spring normally invokes InitializingBean.afterPropertiesSet() automatically;
+            // a manually constructed AbstractRoutingDataSource must be initialized explicitly.
+            ((RoutingDataSource) managed).afterPropertiesSet();
+            assertEquals(42, new JdbcTemplate(managed).queryForObject("SELECT 42", Integer.class));
+            var pools = (RoutingPoolDiagnostics) managed;
+            assertEquals(1, pools.poolStates().size());
+            assertFalse(pools.poolStates().getFirst().closed());
+        } finally {
+            ((AutoCloseable) managed).close();
+        }
+        assertTrue(((RoutingPoolDiagnostics) managed).poolStates().getFirst().closed());
+    }
+
 }

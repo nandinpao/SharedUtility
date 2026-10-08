@@ -24,6 +24,15 @@ class StreamMonitoringServiceTest {
         props = enabled(); props.setInterval(Duration.ofMillis(100));
         assertThrows(IllegalArgumentException.class, props::validate);
     }
+    @Test void closeMarksGaugesUnknownAndRejectsRestart() {
+        var redis = mock(RedissonClient.class);
+        var registry = new SimpleMeterRegistry();
+        var monitor = new StreamMonitoringService(new StreamPendingSnapshot(redis, ":dlq"), registry, enabled());
+        monitor.close();
+        monitor.close();
+        assertEquals(-1d, registry.get("redis.stream.pending").tag("stream", "orders").tag("group", "g").gauge().value());
+        assertThrows(IllegalStateException.class, monitor::start);
+    }
     @SuppressWarnings("unchecked")
     @Test void exportsRealSnapshotAndShowsUnknownOnFailure() {
         var redis = mock(RedissonClient.class);
@@ -33,9 +42,9 @@ class StreamMonitoringServiceTest {
         when(redis.<String,String>getStream("orders:dlq")).thenReturn(dead);
         when(src.getPendingInfo("g")).thenReturn(new PendingResult(6, null, null, Map.of()));
         when(dead.size()).thenReturn(2L);
-        try (var registry = new SimpleMeterRegistry();
-             var monitor = new StreamMonitoringService(new StreamPendingSnapshot(redis, ":dlq"),
-                     registry, enabled())) {
+        var registry = new SimpleMeterRegistry();
+        try (var monitor = new StreamMonitoringService(new StreamPendingSnapshot(redis, ":dlq"),
+                registry, enabled())) {
             monitor.refreshSafely();
             assertEquals(6d, registry.get("redis.stream.pending").tag("stream", "orders").tag("group", "g").gauge().value());
             assertEquals(2d, registry.get("redis.stream.dlq.entries").tag("stream", "orders").tag("group", "g").gauge().value());

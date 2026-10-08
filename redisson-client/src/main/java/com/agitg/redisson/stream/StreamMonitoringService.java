@@ -52,8 +52,13 @@ public final class StreamMonitoringService implements AutoCloseable {
         });
     }
     public void start() {
-        if (started.compareAndSet(false, true)) {
-            executor.scheduleWithFixedDelay(this::refreshSafely, 0, intervalMillis, TimeUnit.MILLISECONDS);
+        synchronized (this) {
+            if (executor.isShutdown()) {
+                throw new IllegalStateException("Stream monitoring service is closed");
+            }
+            if (started.compareAndSet(false, true)) {
+                executor.scheduleWithFixedDelay(this::refreshSafely, 0, intervalMillis, TimeUnit.MILLISECONDS);
+            }
         }
     }
     /** Testable explicit poll; scheduler also calls it. */
@@ -62,12 +67,18 @@ public final class StreamMonitoringService implements AutoCloseable {
         for (var entry : watched) {
             try {
                 var current = snapshot.sample(entry.stream(), entry.group());
-                entry.pending().set(current.pending());
-                entry.dlq().set(current.deadLetters());
+                synchronized (this) {
+                    if (executor.isShutdown()) return;
+                    entry.pending().set(current.pending());
+                    entry.dlq().set(current.deadLetters());
+                }
             } catch (RuntimeException error) {
-                entry.pending().set(-1L);
-                entry.dlq().set(-1L);
-                entry.failures().increment();
+                synchronized (this) {
+                    if (executor.isShutdown()) return;
+                    entry.pending().set(-1L);
+                    entry.dlq().set(-1L);
+                    entry.failures().increment();
+                }
                 logger.log(System.Logger.Level.WARNING,
                         "Redis metrics sample failed stream={0} group={1} exceptionType={2}",
                         entry.stream(), entry.group(), error.getClass().getName());
@@ -75,6 +86,13 @@ public final class StreamMonitoringService implements AutoCloseable {
         }
     }
     @Override public void close() {
-        executor.shutdownNow();
+        synchronized (this) {
+            executor.shutdownNow();
+            // A closed monitor has no current observations; never expose stale counts.
+            for (var entry : watched) {
+                entry.pending().set(-1L);
+                entry.dlq().set(-1L);
+            }
+        }
     }
 }

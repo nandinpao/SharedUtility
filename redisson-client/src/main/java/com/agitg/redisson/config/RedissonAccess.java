@@ -52,6 +52,15 @@ public class RedissonAccess {
         getBucket(key).set(value, ttlSeconds, TimeUnit.SECONDS);
     }
 
+    /**
+     * Additional type-safe TTL entry point. Zero, negative and sub-millisecond
+     * durations are rejected before any Redis command is sent.
+     * Existing long-based methods retain their historical behavior.
+     */
+    public <T> void setBucket(String key, T value, Duration ttl) {
+        getBucket(key).set(value, RedisTimeArguments.positiveMillis(ttl, "ttl"), TimeUnit.MILLISECONDS);
+    }
+
     public <T> T getBucketValue(String key, Class<T> clazz) {
         return clazz.cast(getBucket(key).get());
     }
@@ -66,6 +75,11 @@ public class RedissonAccess {
 
     public void expireBucket(String key, long ttlSeconds) {
         getBucket(key).expire(ttlSeconds, TimeUnit.SECONDS);
+    }
+
+    /** TTL is expressed explicitly as a Duration (legacy long overload uses seconds). */
+    public boolean expireBucket(String key, Duration ttl) {
+        return getBucket(key).expire(Duration.ofMillis(RedisTimeArguments.positiveMillis(ttl, "ttl")));
     }
 
     // === Map ===
@@ -85,6 +99,14 @@ public class RedissonAccess {
         RMap<K, T> map = redissonClient.getMap(redisKey);
         map.put(key, value);
         map.expire(Duration.ofMillis(expireMillis));
+    }
+
+    /** Set entire Redis Hash TTL; never an expiry on the individual field. */
+    public <K, T> void putMapValue(String redisKey, K key, T value, Duration ttl) {
+        long millis = RedisTimeArguments.positiveMillis(ttl, "ttl");
+        RMap<K, T> map = redissonClient.getMap(redisKey);
+        map.put(key, value);
+        map.expire(Duration.ofMillis(millis));
     }
 
     public <K, V> V getFromMap(String redisKey, K key, Class<V> valueType) {
@@ -146,6 +168,16 @@ public class RedissonAccess {
         return raw.stream().map(obj -> objectMapper.convertValue(obj, clazz)).toList();
     }
 
+    /**
+     * Atomic, empty-safe Redis list pop via RDeque's LPOP. Unlike remove(0),
+     * the result is null for an empty list and concurrent readers are safe.
+     */
+    public <T> T pollFromList(String name, Class<T> clazz) {
+        java.util.Objects.requireNonNull(clazz, "clazz");
+        Object raw = redissonClient.getDeque(name).pollFirst();
+        return raw == null ? null : objectMapper.convertValue(raw, clazz);
+    }
+
     // === Queue ===
 
     public <T> RQueue<T> getQueue(String name) {
@@ -203,6 +235,29 @@ public class RedissonAccess {
         }
     }
 
+    /**
+     * Millisecond-resolution lease; no watchdog extension after lease expires.
+     * Must be unlocked on the acquiring thread. Not a cross-thread unlock API.
+     */
+    public void lock(String name, Duration lease) {
+        getLock(name).lock(RedisTimeArguments.positiveMillis(lease, "lease"), TimeUnit.MILLISECONDS);
+    }
+
+    /** Wait can be zero; lease must be positive. Interruption is propagated. */
+    public boolean tryLock(String name, Duration wait, Duration lease) throws InterruptedException {
+        long waitMillis = RedisTimeArguments.nonNegativeMillis(wait, "wait");
+        long leaseMillis = RedisTimeArguments.positiveMillis(lease, "lease");
+        return getLock(name).tryLock(waitMillis, leaseMillis, TimeUnit.MILLISECONDS);
+    }
+
+    /** Release only a lock held by this thread and signal whether it was released. */
+    public boolean unlockIfHeld(String name) {
+        RLock lock = getLock(name);
+        if (!lock.isHeldByCurrentThread()) return false;
+        lock.unlock();
+        return true;
+    }
+
     // === BloomFilter ===
 
     public <T> RBloomFilter<T> getBloomFilter(String name) {
@@ -238,6 +293,18 @@ public class RedissonAccess {
 
     public <T> int subscribe(String topic, MessageListener<T> listener) {
         return getTopic(topic).addListener(Object.class, listener);
+    }
+
+    /** Subscribe with a concrete payload type rather than legacy Object.class. */
+    public <T> int subscribe(String topic, Class<T> messageType, MessageListener<T> listener) {
+        java.util.Objects.requireNonNull(messageType, "messageType");
+        java.util.Objects.requireNonNull(listener, "listener");
+        return getTopic(topic).addListener(messageType, listener);
+    }
+
+    /** Remove only the listener id returned by subscribe; does not remove all topic listeners. */
+    public void unsubscribe(String topic, int listenerId) {
+        getTopic(topic).removeListener(listenerId);
     }
 
     public <T> void setListWithTTL(String key, List<T> list, long ttlSeconds) {
@@ -299,6 +366,12 @@ public class RedissonAccess {
 
     public boolean expireKey(String key, long seconds) {
         return redissonClient.getBucket(key).expire(seconds, TimeUnit.SECONDS);
+    }
+
+    /** Set TTL with explicit unit; existing expireKey(long) still uses seconds. */
+    public boolean expireKey(String key, Duration ttl) {
+        return redissonClient.getBucket(key).expire(
+                Duration.ofMillis(RedisTimeArguments.positiveMillis(ttl, "ttl")));
     }
 
     // ==== Stream ====

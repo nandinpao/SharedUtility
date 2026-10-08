@@ -2,6 +2,7 @@ package com.agitg.database.aop.mybatis;
 
 import java.util.Collections;
 import java.util.List;
+import com.agitg.sharedutility.database.mybatis.MapperPackagePolicy;
 
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -37,12 +38,8 @@ public class MapperScanRegistrar implements ImportBeanDefinitionRegistrar, Envir
         // 建立 MapperScannerConfigurer BeanDefinition
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MapperScannerConfigurer.class);
 
-        if (!basePackages.isEmpty()) {
-            builder.addPropertyValue("basePackage", String.join(",", basePackages));
-        } else {
-            throw new IllegalArgumentException(
-                    "At least one of '" + BASE_PACKAGES_PROPERTY + "' must be specified.");
-        }
+        builder.addPropertyValue("basePackage",
+                MapperPackagePolicy.requireBasePackage(basePackages, BASE_PACKAGES_PROPERTY));
 
         registry.registerBeanDefinition("pgMapperScannerConfigurer", builder.getBeanDefinition());
 

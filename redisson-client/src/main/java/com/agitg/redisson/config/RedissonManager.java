@@ -11,10 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /** @deprecated Use Spring-managed RedissonClient. Static client lifecycle cannot be scope-isolated. */
 @Deprecated(forRemoval = false)
-public final class RedissonManager {
+public class RedissonManager {
     private static volatile RedissonClient client;
     private static final ReentrantLock LOCK = new ReentrantLock();
-    private RedissonManager() { }
+    /** @deprecated Static utility; constructor retained for 1.x binary/source compatibility. */
+    @Deprecated(since = "2.0", forRemoval = false)
+    public RedissonManager() { }
     public static RedissonClient getClient(InputStream in, ObjectMapper mapper) {
         Objects.requireNonNull(mapper, "mapper");
         if (client == null) {
