@@ -1,11 +1,8 @@
 package com.agitg.redisson.config;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -26,24 +23,19 @@ import org.redisson.api.StreamMessageId;
 import org.redisson.api.listener.MessageListener;
 import org.redisson.api.stream.StreamAddArgs;
 import org.redisson.api.stream.StreamCreateGroupArgs;
-import org.redisson.api.stream.StreamMultiReadArgs;
-import org.redisson.api.stream.StreamMultiReadGroupArgs;
 import org.redisson.api.stream.StreamReadGroupArgs;
-import org.redisson.client.RedisBusyException;
 import org.redisson.client.codec.Codec;
-import org.springframework.stereotype.Component;
 
-import com.agitg.redisson.streasm.StreamMessageWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
-@Component
 @RequiredArgsConstructor
 public class RedissonAccess {
 
     private final RedissonClient redissonClient;
+
     private final ObjectMapper objectMapper;
 
     // === Bucket ===
@@ -100,8 +92,12 @@ public class RedissonAccess {
         return objectMapper.convertValue(raw, valueType);
     }
 
-    public <K> void removeFromMap(String map, K key) {
-        getMap(map).remove(key);
+    public <K> void removeFromMap(String redisKey, K key) {
+        getMap(redisKey).remove(key);
+    }
+
+    public <K> void deletemMap(String redisKey) {
+        getMap(redisKey).delete();
     }
 
     public <K, V> Map<K, V> getAllFromMap(String redisKey, Class<K> keyClass, Class<V> valueClass) {
@@ -260,8 +256,8 @@ public class RedissonAccess {
 
     public <T> List<T> getListFromBucket(String key, Class<T> itemClass) {
         Object raw = redissonClient.getBucket(key).get();
-        return objectMapper.convertValue(raw, new TypeReference<>() {
-        });
+        return objectMapper.convertValue(raw, objectMapper.getTypeFactory()
+                .constructCollectionType(List.class, itemClass));
     }
 
     public <T> List<T> getListFromBucket(String key, TypeReference<List<T>> typeRef) {
@@ -271,8 +267,8 @@ public class RedissonAccess {
 
     public <K, V> Map<K, V> getMapFromBucket(String key, Class<K> keyClass, Class<V> valueClass) {
         Object raw = redissonClient.getBucket(key).get();
-        return objectMapper.convertValue(raw, new TypeReference<>() {
-        });
+        return objectMapper.convertValue(raw, objectMapper.getTypeFactory()
+                .constructMapType(Map.class, keyClass, valueClass));
     }
 
     public <K, V> Map<K, V> getMapFromBucket(String key, TypeReference<Map<K, V>> typeRef) {
@@ -282,8 +278,8 @@ public class RedissonAccess {
 
     public <T> Set<T> getSetFromBucket(String key, Class<T> itemClass) {
         Object raw = redissonClient.getBucket(key).get();
-        return objectMapper.convertValue(raw, new TypeReference<>() {
-        });
+        return objectMapper.convertValue(raw, objectMapper.getTypeFactory()
+                .constructCollectionType(Set.class, itemClass));
     }
 
     public <T> Set<T> getSetFromBucket(String key, TypeReference<Set<T>> typeRef) {

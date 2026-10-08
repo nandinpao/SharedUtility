@@ -1,160 +1,214 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project>
-
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-
         <groupId>org.springframework.boot</groupId>
-
         <artifactId>spring-boot-starter-parent</artifactId>
-
-        <version>3.5.0-M3</version>
-
+        <version>4.0.6</version>
+        <relativePath/>
     </parent>
 
     <groupId>com.agitg</groupId>
-
     <artifactId>parent-project</artifactId>
-
-    <version>1.0-SNAPSHOT</version>
-
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <name>SharedUtility parent</name>
 
     <properties>
-
-        <maven.compiler.source>21</maven.compiler.source>
-
-        <maven.compiler.target>21</maven.compiler.target>
-
+        <java.version>25</java.version>
+        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.enablePreview>false</maven.compiler.enablePreview>
+        <lombok.version>1.18.46</lombok.version>
+        <spring.boot.version>4.0.6</spring.boot.version>
+        <mybatis.plus.version>3.5.17</mybatis.plus.version>
+        <spring.framework.version>7.0.7</spring.framework.version>
+        <spring.boot.hibernate.version>${spring.boot.version}</spring.boot.hibernate.version>
+        <aspectjweaver.version>1.9.25.1</aspectjweaver.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <modules>
-
         <module>database</module>
-
         <module>redisson-client</module>
-
     </modules>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${spring.framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${spring.framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjweaver</artifactId>
+                <version>${aspectjweaver.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-
         <dependency>
-
-            <groupId>org.springframework.boot</groupId>
-
-            <artifactId>spring-boot-starter-aop</artifactId>
-
-            <version>3.4.4</version>
-
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
         </dependency>
-
         <dependency>
-
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
-
             <artifactId>lombok</artifactId>
-
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
             <optional>true</optional>
-
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
-
-        <directory>target</directory>
-
         <pluginManagement>
-
             <plugins>
-
                 <plugin>
-
-                    <groupId>org.graalvm.buildtools</groupId>
-
-                    <artifactId>native-maven-plugin</artifactId>
-
-                </plugin>
-
-                <plugin>
-
-                    <groupId>org.springframework.boot</groupId>
-
-                    <artifactId>spring-boot-maven-plugin</artifactId>
-
-                </plugin>
-
-                <plugin>
-
                     <groupId>org.apache.maven.plugins</groupId>
-
                     <artifactId>maven-compiler-plugin</artifactId>
-
-                    <version>3.11.0</version>
-
+                    <version>3.14.1</version>
                     <configuration>
-
-                        <source>${maven.compiler.source}</source>
-
-                        <target>${maven.compiler.target}</target>
-
+                        <release>${maven.compiler.release}</release>
+                        <enablePreview>${maven.compiler.enablePreview}</enablePreview>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
-
                 </plugin>
-
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.4</version>
+                    <configuration>
+                        <failIfNoTests>true</failIfNoTests>
+                        <useModulePath>false</useModulePath>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.15</version>
+                </plugin>
             </plugins>
-
         </pluginManagement>
-
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.6.2</version>
+                <executions>
+                    <execution>
+                        <id>enforce-toolchain</id>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion><version>[25,26)</version></requireJavaVersion>
+                                <requireMavenVersion><version>[3.9.0,4)</version></requireMavenVersion>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.baomidou:mybatis-plus-boot-starter</exclude>
+                                        <exclude>com.baomidou:mybatis-plus-boot3-starter</exclude>
+                                        <exclude>com.baomidou:mybatis-plus-spring-boot3-starter</exclude>
+                                        <exclude>org.mybatis.spring.boot:mybatis-spring-boot-starter:(,4.0.0)</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals><goal>prepare-agent</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>coverage-report</id>
+                        <phase>verify</phase>
+                        <goals><goal>report</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
-
-    <repositories>
-
-        <repository>
-
-            <id>spring-milestones</id>
-
-            <name>Spring Milestones</name>
-
-            <url>https://repo.spring.io/milestone</url>
-
-            <snapshots>
-
-                <enabled>false</enabled>
-
-            </snapshots>
-
-        </repository>
-
-    </repositories>
-
-    <pluginRepositories>
-
-        <pluginRepository>
-
-            <id>spring-milestones</id>
-
-            <name>Spring Milestones</name>
-
-            <url>https://repo.spring.io/milestone</url>
-
-            <snapshots>
-
-                <enabled>false</enabled>
-
-            </snapshots>
-
-        </pluginRepository>
-
-    </pluginRepositories>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>nandinpao</name>
-            <url>https://maven.pkg.github.com/nandinpao/SharedUtility</url>
-        </repository>
-    </distributionManagement>
-
+    <!-- Phase 3 strict coverage only over new critical pure-logic/security classes.
+         Increase scope/threshold after JDK25 CI calibration. -->
+    <profiles>
+        <profile>
+            <id>phase3-strict</id>
+            <build><plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <executions><execution>
+                        <id>phase3-new-critical-coverage-gate</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                        <configuration>
+                            <rules><rule>
+                                <element>CLASS</element>
+                                <includes>
+                                    <include>com.agitg.redisson.stream.StreamDeadLetterPolicy</include>
+                                    <include>com.agitg.redisson.stream.StreamReconnectBackoff</include>
+                                    <include>com.agitg.redisson.stream.StreamReplayPlanner</include>
+                                    <include>com.agitg.redisson.stream.JdbcStreamIdempotencyGuard</include>
+                                    <include>com.agitg.redisson.config.RedisTransportPolicy</include>
+                                </includes>
+                                <limits><limit>
+                                    <counter>LINE</counter><value>COVEREDRATIO</value>
+                                    <minimum>0.65</minimum>
+                                </limit></limits>
+                            </rule></rules>
+                        </configuration>
+                    </execution></executions>
+                </plugin>
+            </plugins></build>
+        </profile>
+    </profiles>
 </project>

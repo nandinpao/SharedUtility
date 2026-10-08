@@ -15,6 +15,13 @@ public class RedissonProperties {
     private Pool pool;
     private RedissonSingle single;
     private RedissonCluster cluster;
+    private Tls tls = new Tls();
+
+    @Data
+    public static class Tls {
+        private boolean enabled = false;
+        private boolean required = false;
+    }
 
     @Data
     public static class Pool {

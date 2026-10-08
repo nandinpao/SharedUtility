@@ -7,12 +7,12 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionFactoryBean;
+import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.context.properties.bind.BindResult;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
@@ -40,7 +40,7 @@ public class MybatisConfig {
         log.info("Start Mybatis: {} ", props);
 
         MybatisConfigurationProperties config = props.getConfiguration();
-        org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
+        MybatisConfiguration configuration = new MybatisConfiguration();
 
         if (config != null) {
             if (config.getMapUnderscoreToCamelCase() != null) {
@@ -57,7 +57,7 @@ public class MybatisConfig {
             }
         }
 
-        SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+        MybatisSqlSessionFactoryBean factoryBean = new MybatisSqlSessionFactoryBean();
         factoryBean.setDataSource(dataSource);
         factoryBean.setConfiguration(configuration);
 
@@ -77,7 +77,7 @@ public class MybatisConfig {
         }
 
         if (props.getTypeHandlersPackage() != null && !props.getTypeHandlersPackage().isEmpty()) {
-            log.debug("type-handlers-package: {}", props.getTypeHandlersPackage());
+            log.debug("type-handlers-package: {}", String.join(",", props.getTypeHandlersPackage()));
             factoryBean.setTypeHandlersPackage(String.join(",", props.getTypeHandlersPackage()));
         }
 
@@ -89,65 +89,19 @@ public class MybatisConfig {
         return new SqlSessionTemplate(factory);
     }
 
-    /**
-     * 關鍵：用 Environment 讀取 YAML，組態早於一般 @Bean 初始化執行，
-     * 無需 @MapperScan，也不必 @Import MapperScannerRegistrar。
-     * 記得 static。
-     */
-
+    /** A single canonical scan key; do not silently scan entity packages. */
     @Bean
     public static MapperScannerConfigurer mapperScannerConfigurer(Environment env) {
         Binder binder = Binder.get(env);
-
-        List<String> pkgList = new ArrayList<>();
-
-        // 支援多種鍵名（破折號／駝峰／點分隔）
-        for (String key : Arrays.asList(
-                "pg.mybatis.mapper-scan-packages",
-                "pg.mybatis.mapper-scan-packages",
-                "pg.mybatis.mapper.scan.packages")) {
-            // ✅ 正確用法：用 Bindable 取 List<String>
-            BindResult<List<String>> br = binder.bind(key, Bindable.listOf(String.class));
-            if (br.isBound() && br.get() != null) {
-                pkgList.addAll(br.get());
-            } else {
-                // 有些環境用逗號字串
-                BindResult<String> brStr = binder.bind(key, Bindable.of(String.class));
-                if (brStr.isBound() && brStr.get() != null) {
-                    for (String s : brStr.get().split(",")) {
-                        String t = s.trim();
-                        if (!t.isEmpty())
-                            pkgList.add(t);
-                    }
-                }
-            }
+        List<String> packages = binder.bind("pg.mybatis.mapper-scan-packages",
+                Bindable.listOf(String.class)).orElse(List.of()).stream()
+                .map(String::trim).filter(value -> !value.isEmpty()).distinct().toList();
+        if (packages.isEmpty()) {
+            throw new IllegalStateException("pg.mybatis.mapper-scan-packages is required when pg.mybatis.enabled=true");
         }
-
-        log.info("[MyBatis] resolved mapper scan packages = {}", pkgList);
-
-        // 備援：退回用 type-aliases-package（至少能跑起來）
-        if (pkgList.isEmpty()) {
-            BindResult<List<String>> alias = binder.bind(
-                    "pg.mybatis.type-aliases-package",
-                    Bindable.listOf(String.class));
-            if (alias.isBound() && alias.get() != null) {
-                pkgList.addAll(alias.get());
-                log.warn("[MyBatis] mapper-scan-packages 未設定，退回使用 type-aliases-package: {}", pkgList);
-            }
-        }
-
-        if (pkgList.isEmpty()) {
-            throw new IllegalStateException(
-                    "missing property: 'pg.mybatis.mapper-scan-packages'. Please configure mapper interface packages.");
-        }
-
-        MapperScannerConfigurer c = new MapperScannerConfigurer();
-        c.setSqlSessionFactoryBeanName("sqlSessionFactory");
-        c.setBasePackage(String.join(",", pkgList));
-        // 只掃描有 @Mapper 的介面（需要的話開啟）
-        // c.setAnnotationClass(org.apache.ibatis.annotations.Mapper.class);
-
-        log.info("[MyBatis] MapperScannerConfigurer basePackage = {}", String.join(",", pkgList));
-        return c;
+        MapperScannerConfigurer config = new MapperScannerConfigurer();
+        config.setSqlSessionFactoryBeanName("sqlSessionFactory");
+        config.setBasePackage(String.join(",", packages));
+        return config;
     }
 }

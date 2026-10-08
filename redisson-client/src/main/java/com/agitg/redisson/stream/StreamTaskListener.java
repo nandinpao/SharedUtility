@@ -1,4 +1,4 @@
-package com.agitg.redisson.streasm;
+package com.agitg.redisson.stream;
 
 import org.redisson.api.StreamMessageId;
 

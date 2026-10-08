@@ -1,68 +1,29 @@
+# SharedUtility database example.
+#
+# Single-node mode is recommended for local/dev/small standalone deployment.
+# Cluster mode is recommended for production read/write separation.
+# Configure exactly one mode in the real application.yml.
+
 pg:
-  write:
-    - name: master1
-      url: jdbc:postgresql://master1.db:5432/app
-      username: writer
-      password: secret
-      isDefault: true
-      driver-class-name: org.postgresql.Driver
-      hikari:
-        minimum-idle: 3
-        maximum-pool-size: 5
-        idle-timeout: 30000
-        max-lifetime: 1800000
-        connection-timeout: 60000
-        pool-name: Master1Pool
-    - name: master2
-      url: jdbc:postgresql://master2.db:5432/app
-      username: writer
-      password: secret
-      driver-class-name: org.postgresql.Driver
-      hikari:
-        minimum-idle: 3
-        maximum-pool-size: 5
-        idle-timeout: 30000
-        max-lifetime: 1800000
-        connection-timeout: 60000
-        pool-name: Master2Pool
-  read:
-    - name: slave1
-      url: jdbc:postgresql://slave1.db:5432/app
-      username: reader
-      password: secret
-      driver-class-name: org.postgresql.Driver
-      hikari:
-        minimum-idle: 3
-        maximum-pool-size: 5
-        idle-timeout: 30000
-        max-lifetime: 1800000
-        connection-timeout: 60000
-        pool-name: Slave1Pool
-    - name: slave2
-      url: jdbc:postgresql://slave2.db:5432/app
-      username: reader
-      password: secret
-      driver-class-name: org.postgresql.Driver
-      hikari:
-        minimum-idle: 3
-        maximum-pool-size: 5
-        idle-timeout: 30000
-        max-lifetime: 1800000
-        connection-timeout: 60000
-        pool-name: Slave2Pool
+  enabled: true
+  single:
+    name: single
+    url: jdbc:postgresql://localhost:5432/app
+    username: app
+    password: ${PG_PASSWORD}
+    isDefault: true
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 3
+      maximum-pool-size: 10
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      pool-name: PgSinglePool
 
   jpa:
-    enabled: true
-    properties:
-      hibernate:
-        format_sql: false
-        jdbc.batch_size: 50
-        order_inserts: true
-        order_updates: true
-        hbm2ddl:
-          auto: validate
+    enabled: false
 
-  pg:
   mybatis:
     enabled: true
     configuration:
@@ -71,9 +32,8 @@ pg:
       cache-enabled: false
       log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
     type-aliases-package:
-      - com.agitg.auth.domain.model
+      - com.example.domain
     mapper-locations:
-      - classpath*:mapper/*.xml
+      - classpath*:mapper/**/*.xml
     mapper-scan-packages:
-      - com.agitg.auth.infrastructure.mybatis.mapper
-      - com.agitg.auth.dao.mapper
+      - com.example.mapper

@@ -20,12 +20,16 @@ public class MapperScanRegistrar implements ImportBeanDefinitionRegistrar, Envir
 
     private Environment environment;
 
-    private static final String BASE_PACKAGES_PROPERTY = "pg.mybatis.base-packages";
+    private static final String BASE_PACKAGES_PROPERTY = "pg.mybatis.mapper-scan-packages";
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
-        // 讀取設定值
+        // Legacy @EnablePgMapperScan must not register a duplicate scanner
+        // when MybatisConfig is already active.
+        if ("true".equalsIgnoreCase(environment.getProperty("pg.mybatis.enabled"))) {
+            return;
+        }
         List<String> basePackages = Binder.get(environment)
                 .bind(BASE_PACKAGES_PROPERTY, Bindable.listOf(String.class))
                 .orElse(Collections.emptyList());

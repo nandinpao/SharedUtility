@@ -1,0 +1,63 @@
+# SharedUtility PostgreSQL cluster/read-write routing example.
+
+pg:
+  enabled: true
+  write:
+    - name: master1
+      url: jdbc:postgresql://master1.db:5432/app
+      username: writer
+      password: ${PG_WRITER_PASSWORD}
+      isDefault: true
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 10
+        idle-timeout: 30000
+        max-lifetime: 1800000
+        connection-timeout: 30000
+        pool-name: Master1Pool
+    # Multi-writer routing is rejected in Phase 1. Point the sole
+    # writer URL to your cluster's HA/VIP or leader-aware endpoint.
+
+  read:
+    - name: slave1
+      url: jdbc:postgresql://slave1.db:5432/app
+      username: reader
+      password: ${PG_READER_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 10
+        idle-timeout: 30000
+        max-lifetime: 1800000
+        connection-timeout: 30000
+        pool-name: Slave1Pool
+    - name: slave2
+      url: jdbc:postgresql://slave2.db:5432/app
+      username: reader
+      password: ${PG_READER_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 10
+        idle-timeout: 30000
+        max-lifetime: 1800000
+        connection-timeout: 30000
+        pool-name: Slave2Pool
+
+  jpa:
+    enabled: false
+
+  mybatis:
+    enabled: true
+    configuration:
+      map-underscore-to-camel-case: true
+      default-statement-timeout: 5
+      cache-enabled: false
+      log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    type-aliases-package:
+      - com.example.domain
+    mapper-locations:
+      - classpath*:mapper/**/*.xml
+    mapper-scan-packages:
+      - com.example.mapper

@@ -1,4 +1,4 @@
 com.agitg.database.aop.jpa.JpaExtAutoConfiguration
 com.agitg.database.aop.mybatis.MybatisConfig
 com.agitg.database.DatabaseClusterConfig
-
+com.agitg.database.DatabaseRoutingAutoConfiguration
